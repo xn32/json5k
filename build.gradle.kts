@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
+    `maven-publish`
     `java-library`
 }
 
@@ -20,6 +21,14 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("lib") {
+            from(components["java"])
+        }
+    }
 }
 
 tasks.withType<KotlinCompile> {
