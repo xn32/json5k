@@ -1,4 +1,4 @@
-package io.github.xn32.json5k.util
+package io.github.xn32.json5k.parsing
 
 import java.io.InputStream
 
@@ -23,7 +23,6 @@ internal fun InputReader.consumeWhile(predicate: (Char) -> Boolean): String {
 
     return builder.toString()
 }
-
 
 internal class StreamReader(
     inputStream: InputStream,

@@ -1,10 +1,10 @@
 package io.github.xn32.json5k.internals
 
 import io.github.xn32.json5k.checkPosition
-import io.github.xn32.json5k.util.StreamReader
-import io.github.xn32.json5k.util.consumeOrNull
-import io.github.xn32.json5k.util.consumeWhile
-import io.github.xn32.json5k.util.peekOrNull
+import io.github.xn32.json5k.parsing.StreamReader
+import io.github.xn32.json5k.parsing.consumeOrNull
+import io.github.xn32.json5k.parsing.consumeWhile
+import io.github.xn32.json5k.parsing.peekOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

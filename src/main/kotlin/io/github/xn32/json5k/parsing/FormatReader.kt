@@ -3,10 +3,6 @@ package io.github.xn32.json5k.parsing
 import io.github.xn32.json5k.format.Specification.LINE_TERMINATORS
 import io.github.xn32.json5k.format.Specification.WHITESPACE_CHARS
 import io.github.xn32.json5k.throwTokenError
-import io.github.xn32.json5k.util.InputReader
-import io.github.xn32.json5k.util.StreamReader
-import io.github.xn32.json5k.util.consumeOrNull
-import io.github.xn32.json5k.util.peekOrNull
 import java.io.InputStream
 
 internal class FormatReader(stream: InputStream) : InputReader by StreamReader(stream, LINE_TERMINATORS, true) {

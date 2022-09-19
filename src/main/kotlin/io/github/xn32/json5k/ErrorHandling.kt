@@ -1,9 +1,8 @@
 package io.github.xn32.json5k
 
 import io.github.xn32.json5k.format.Specification
-import io.github.xn32.json5k.util.InputReader
-import io.github.xn32.json5k.util.ReaderPosition
-import io.github.xn32.json5k.util.isUnicodeOther
+import io.github.xn32.json5k.parsing.InputReader
+import io.github.xn32.json5k.parsing.ReaderPosition
 
 interface PositionProvider {
     val line: UInt
@@ -16,11 +15,17 @@ sealed class ParsingError constructor(msg: String, pos: ReaderPosition) : Except
     override val column: UInt = pos.column
 }
 
+class LiteralError internal constructor(val literal: String, pos: ReaderPosition) :
+    ParsingError("unexpected literal '$literal'", pos)
+
 class CharError internal constructor(val char: Char, pos: ReaderPosition) :
     ParsingError("unexpected character '${char.display()}'", pos)
 
 class EndOfFileError internal constructor(pos: ReaderPosition) :
     ParsingError("unexpected end of file", pos)
+
+class OverflowError internal constructor(pos: ReaderPosition) :
+    ParsingError("integer exceeds internal value range", pos)
 
 private fun Char.display(): String = if (isUnicodeOther()) {
     Specification.REVERSE_ESCAPE_CHAR_MAP[this]?.let { "\\$it" } ?: "U+${"%04X".format(code)}"

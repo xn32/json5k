@@ -1,7 +1,7 @@
 package io.github.xn32.json5k
 
-import io.github.xn32.json5k.util.InputReader
-import io.github.xn32.json5k.util.ReaderPosition
+import io.github.xn32.json5k.parsing.InputReader
+import io.github.xn32.json5k.parsing.ReaderPosition
 import kotlin.test.assertEquals
 
 internal fun InputReader.checkPosition(line: Int, column: Int? = null) = pos.check(line, column)

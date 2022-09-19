@@ -1,9 +1,9 @@
 package io.github.xn32.json5k.internals
 
-import io.github.xn32.json5k.util.isDecimalDigit
-import io.github.xn32.json5k.util.isHexDigit
-import io.github.xn32.json5k.util.isUnicodeLetter
-import io.github.xn32.json5k.util.isUnicodeOther
+import io.github.xn32.json5k.isDecimalDigit
+import io.github.xn32.json5k.isHexDigit
+import io.github.xn32.json5k.isUnicodeLetter
+import io.github.xn32.json5k.isUnicodeOther
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

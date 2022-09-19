@@ -1,4 +1,4 @@
-package io.github.xn32.json5k.util
+package io.github.xn32.json5k
 
 internal fun Char?.isUnicodeLetter(): Boolean = this?.category in UNICODE_LETTER_CATEGORIES
 internal fun Char?.isUnicodeOther(): Boolean = this?.category in UNICODE_OTHER_CATEGORIES
