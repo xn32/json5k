@@ -24,6 +24,7 @@ internal fun InputReader.consumeWhile(predicate: (Char) -> Boolean): String {
     return builder.toString()
 }
 
+
 internal class StreamReader(
     inputStream: InputStream,
     private val lineTerminators: Set<Char>,

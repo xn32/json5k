@@ -11,3 +11,8 @@ internal fun ReaderPosition.check(line: Int, column: Int? = null) {
         assertEquals(column, this.column.toInt())
     }
 }
+
+internal fun PositionProvider.checkPosition(line: Int, column: Int) {
+    assertEquals(line, this.line.toInt())
+    assertEquals(column, this.column.toInt())
+}
