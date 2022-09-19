@@ -14,6 +14,8 @@ internal object Specification {
         char.category in UNICODE_IDENTIFIER_PART_CATEGORIES ||
         char == '\u200c' || char == '\u200d'
 
+    fun isIdentifier(sequence: CharSequence): Boolean = sequence.all(::isIdentifierPart)
+
     // Specification: https://262.ecma-international.org/5.1/#sec-7.8.4
     val SINGLE_ESCAPE_CHARS = charMapOf(
         '\'' to 0x27, '"' to 0x22, '\\' to 0x5c,
