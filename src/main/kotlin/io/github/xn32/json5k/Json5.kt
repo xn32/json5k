@@ -5,8 +5,10 @@ import io.github.xn32.json5k.config.Settings
 import io.github.xn32.json5k.config.toSettings
 import io.github.xn32.json5k.deserialization.MainDecoder
 import io.github.xn32.json5k.format.Token
+import io.github.xn32.json5k.generation.FormatGenerator
 import io.github.xn32.json5k.parsing.FormatParser
 import io.github.xn32.json5k.parsing.PlainLookaheadParser
+import io.github.xn32.json5k.serialization.MainEncoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InheritableSerialInfo
@@ -61,7 +63,9 @@ private class Json5Impl(
     }
 
     override fun <T> encodeToStream(serializer: SerializationStrategy<T>, value: T, outputStream: OutputStream) {
-        TODO("Not yet implemented")
+        val generator = FormatGenerator(outputStream, settings.outputStrategy)
+        MainEncoder(serializersModule, generator, settings).encodeSerializableValue(serializer, value)
+        generator.put(Token.EndOfFile)
     }
 
     override fun <T> decodeFromString(deserializer: DeserializationStrategy<T>, string: String): T {
@@ -78,6 +82,9 @@ private class Json5Impl(
 
 inline fun <reified T> Json5.decodeFromStream(inputStream: InputStream): T =
     decodeFromStream(serializersModule.serializer(), inputStream)
+
+inline fun <reified T> Json5.encodeToStream(value: T, outputStream: OutputStream) =
+    encodeToStream(serializersModule.serializer(), value, outputStream)
 
 internal val unsignedDescriptors = setOf(
     UByte.serializer(), UShort.serializer(), UInt.serializer(), ULong.serializer()
