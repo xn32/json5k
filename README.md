@@ -10,9 +10,35 @@ It is currently limited to the JVM and supports the following key features:
 - Various configuration options to control the serialization process
 - Carefully constructed error messages for deserialization errors
 
-Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still pending.
+Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still to be done.
 
-Use at your own risk and feel free to [file an issue](https://github.com/xn32/json5k/issues) in case something goes wrong.
+Bug reports and other feedback is highly welcome, for example via the [issue tracker](https://github.com/xn32/json5k/issues) on GitHub.
+
+## Setup instructions
+
+This repository contains a Gradle setup that compiles the binding into a single Java library. Use this library according to your needs.
+
+For evaluation purposes, the easiest solution might be to install it to your local Maven repository:
+```bash
+./gradlew publishToMavenLocal
+```
+
+Afterwards, use it from Gradle (`build.gradle.kts`) as follows:
+```kotlin
+repositories {
+    mavenLocal {
+        content {
+            includeGroup("io.github.xn32")
+        }
+    }
+}
+
+dependencies {
+    implementation("io.github.xn32:json5k:0.1-SNAPSHOT")
+}
+```
+
+However, keep the [limitations](https://docs.gradle.org/7.5/userguide/declaring_repositories.html#sub:maven_local) of the local Maven repository in mind.
 
 ## Usage examples
 
