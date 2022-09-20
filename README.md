@@ -10,7 +10,9 @@ It is currently limited to the JVM and supports the following key features:
 - Various configuration options to control the serialization process
 - Carefully constructed error messages for deserialization errors
 
-Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still pending. Use at your own risk and feel free to [file an issue](https://github.com/xn32/json5k/issues) in case something goes wrong.
+Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still pending.
+
+Use at your own risk and feel free to [file an issue](https://github.com/xn32/json5k/issues) in case something goes wrong.
 
 ## Usage examples
 
@@ -32,9 +34,9 @@ Json5.decodeFromString<Int?>("null") // null
 
 // Deserialization errors:
 Json5.decodeFromString<Byte>("190")
-    // fails with UnexpectedValueError: signed integer in range [-128..127] expected at position 1:1
+    // UnexpectedValueError: signed integer in range [-128..127] expected at position 1:1
 Json5.decodeFromString<List<Double>>("[ 1.0,,")
-    // fails with CharError: unexpected character ',' at position 1:7
+    // CharError: unexpected character ',' at position 1:7
 ```
 
 ### Serializable classes
@@ -52,7 +54,7 @@ Json5.decodeFromString<Person>("{ name: 'Carl', age: 42 }") // Person(name=Carl,
 
 // Deserialization errors:
 Json5.decodeFromString<Person>("{ name: 'Carl', age: 42, age: 10 }")
-    // fails with DuplicateKeyError: duplicate key 'age' specified at position 1:26
+    // DuplicateKeyError: duplicate key 'age' specified at position 1:26
 ```
 
 ### Classes with `@SerialName` annotations
@@ -68,7 +70,7 @@ Json5.decodeFromString<IntWrapper>("{ integer: 10 }") // IntWrapper(int=10)
 
 // Deserialization errors:
 Json5.decodeFromString<IntWrapper>("{ int: 10 }")
-    // fails with UnknownKeyError: unknown key 'int' specified at position 1:3
+    // UnknownKeyError: unknown key 'int' specified at position 1:3
 ```
 
 ### Polymorphic types
@@ -89,7 +91,7 @@ Json5.decodeFromString<Producer>("{ init: 0, mode: 'numbers' }") // NumberProduc
 
 // Deserialization errors:
 Json5.decodeFromString<Producer>("{ init: 0 }")
-    // fails with MissingFieldError: missing field 'mode' in object at position 1:1
+    // MissingFieldError: missing field 'mode' in object at position 1:1
 ```
 
 ### Configuration options
