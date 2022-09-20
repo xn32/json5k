@@ -34,7 +34,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.xn32:json5k:0.1-SNAPSHOT")
+    implementation("io.github.xn32:json5k:0.1.0")
 }
 ```
 
