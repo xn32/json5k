@@ -41,7 +41,7 @@ class UnknownKeyError internal constructor(val key: String, pos: ReaderPosition)
     DecodingError("unknown key '$key' specified", pos)
 
 class DuplicateKeyError internal constructor(val key: String, pos: ReaderPosition) :
-    DecodingError("duplicate key '$key' in object", pos)
+    DecodingError("duplicate key '$key' specified", pos)
 
 class UnexpectedValueError internal constructor(baseMsg: String, pos: ReaderPosition) :
     DecodingError(baseMsg, pos)
