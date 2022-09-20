@@ -12,7 +12,7 @@ It is currently limited to the JVM and supports the following key features:
 
 Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still to be done.
 
-Bug reports and other feedback is highly welcome, for example via the [issue tracker](https://github.com/xn32/json5k/issues) on GitHub.
+Bug reports and other feedback are highly welcome, for example via the [issue tracker](https://github.com/xn32/json5k/issues) on GitHub.
 
 ## Setup instructions
 
@@ -23,9 +23,15 @@ For evaluation purposes, the easiest solution might be to install it to your loc
 ./gradlew publishToMavenLocal
 ```
 
-Afterwards, use it from Gradle (`build.gradle.kts`) as follows:
+Afterwards, use it from `build.gradle.kts` as follows:
 ```kotlin
+plugins {
+    kotlin("jvm") version "1.7.10"
+    kotlin("plugin.serialization") version "1.7.10"
+}
+
 repositories {
+    mavenCentral()
     mavenLocal {
         content {
             includeGroup("io.github.xn32")
@@ -34,6 +40,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.0")
     implementation("io.github.xn32:json5k:0.1.0")
 }
 ```
@@ -44,6 +51,10 @@ However, keep the [limitations](https://docs.gradle.org/7.5/userguide/declaring_
 
 ### Non-hierarchical values
 ```kotlin
+import io.github.xn32.json5k.Json5
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+
 // Serialization:
 Json5.encodeToString(5142) // 5142
 Json5.encodeToString(listOf(4.5, 1.5e2, 1.2e15)) // [4.5,150.0,1.2E15]
@@ -67,6 +78,11 @@ Json5.decodeFromString<List<Double>>("[ 1.0,,")
 
 ### Serializable classes
 ```kotlin
+import io.github.xn32.json5k.Json5
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+
 @Serializable
 data class Person(val name: String, val age: UInt? = null)
 
@@ -85,6 +101,12 @@ Json5.decodeFromString<Person>("{ name: 'Carl', age: 42, age: 10 }")
 
 ### Classes with `@SerialName` annotations
 ```kotlin
+import io.github.xn32.json5k.Json5
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+
 @Serializable
 data class IntWrapper(@SerialName("integer") val int: Int)
 
@@ -101,6 +123,13 @@ Json5.decodeFromString<IntWrapper>("{ int: 10 }")
 
 ### Polymorphic types
 ```kotlin
+import io.github.xn32.json5k.ClassDiscriminator
+import io.github.xn32.json5k.Json5
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+
 @Serializable
 @ClassDiscriminator("mode")
 sealed interface Producer
@@ -123,6 +152,10 @@ Json5.decodeFromString<Producer>("{ init: 0 }")
 ### Configuration options
 Control generated JSON5 output as follows:
 ```kotlin
+import io.github.xn32.json5k.Json5
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+
 val json5 = Json5 {
     prettyPrint = true
     indentationWidth = 2
@@ -130,6 +163,9 @@ val json5 = Json5 {
     quoteMemberNames = true
     encodeDefaults = true
 }
+
+@Serializable
+data class Person(val name: String, val age: UInt? = null)
 
 json5.encodeToString(Person("Oliver"))
 ```
@@ -143,9 +179,16 @@ This will result in the following output:
 
 Accept duplicate keys in JSON5 input as follows:
 ```kotlin
+import io.github.xn32.json5k.Json5
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+
 val json5 = Json5 {
     failOnDuplicateKeys = false
 }
+
+@Serializable
+data class Person(val name: String, val age: UInt? = null)
 
 json5.decodeFromString<Person>("{ name: 'x', age: 11, name: 'y' }")
 ```
