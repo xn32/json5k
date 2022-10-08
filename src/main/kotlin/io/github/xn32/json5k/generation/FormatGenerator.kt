@@ -13,7 +13,7 @@ import java.io.Writer
 private const val INDENT_CHAR = ' '
 
 internal class FormatGenerator(stream: OutputStream, private val outputStrategy: OutputStrategy) : Flushable {
-    private val writer: BufferedWriter = stream.bufferedWriter()
+    private val writer: BufferedWriter = stream.bufferedWriter(Charsets.UTF_8)
     private val tracker = DocumentTracker()
 
     fun put(token: Token) {
