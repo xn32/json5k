@@ -379,6 +379,13 @@ class FormatParserTest {
         }
 
         @Test
+        fun `valid UTF-16 surrogate pair is recognized`() {
+            parserFor("'\\uD83C\\uDFBC'").checkNext<Token.Str>(1, 1) {
+                assertEquals("\ud83c\udfbc", it.string)
+            }.checkEnd(1, 15)
+        }
+
+        @Test
         fun `hex byte escape sequence works`() {
             parserFor("'a\\x12z'").checkNext<Token.Str>(1, 1) {
                 assertEquals("a\u0012z", it.string)
