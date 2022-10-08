@@ -41,7 +41,7 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.0")
-    implementation("io.github.xn32:json5k:0.1.0")
+    implementation("io.github.xn32:json5k:0.2.0-SNAPSHOT")
 }
 ```
 

@@ -9,17 +9,17 @@ internal data class Settings(
 
 internal sealed interface OutputStrategy {
     object Compressed : OutputStrategy {
-        override val quoteChar: Char = DOUBLE_QUOTE
+        override val quoteCharacter: Char = DOUBLE_QUOTE
         override val quoteMemberNames = false
     }
 
     data class HumanReadable(
         val indentationWith: Int,
-        override val quoteChar: Char,
+        override val quoteCharacter: Char,
         override val quoteMemberNames: Boolean,
     ) : OutputStrategy
 
-    val quoteChar: Char
+    val quoteCharacter: Char
     val quoteMemberNames: Boolean
 }
 
@@ -31,7 +31,7 @@ internal fun ConfigBuilder.toSettings(): Settings = Settings(
         require(indentationWidth > 0)
         OutputStrategy.HumanReadable(
             indentationWith = indentationWidth,
-            quoteChar = if (useSingleQuotes) SINGLE_QUOTE else DOUBLE_QUOTE,
+            quoteCharacter = if (useSingleQuotes) SINGLE_QUOTE else DOUBLE_QUOTE,
             quoteMemberNames = quoteMemberNames
         )
     } else {

@@ -1,4 +1,4 @@
-package io.github.xn32.json5k.base
+package io.github.xn32.json5k.internals
 
 import io.github.xn32.json5k.CharError
 import io.github.xn32.json5k.EndOfFileError

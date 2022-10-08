@@ -72,23 +72,14 @@ class SerializationTest {
         @Serializable
         data class Container(val id: Int, val parts: List<Container>?)
         assertEquals(
-            "[{id:1,parts:[{id:3,parts:null}]}]",
-            encode(listOf(Container(1, listOf(Container(3, null)))))
+            "[{id:1,parts:[{id:3,parts:null}]}]", encode(listOf(Container(1, listOf(Container(3, null)))))
         )
     }
 
     @Test
     fun `map is encoded correctly`() {
         assertEquals(
-            "{a:10,b:20,c:null,null:0}",
-            encode(
-                mapOf(
-                    "a" to 10,
-                    "b" to 20,
-                    "c" to null,
-                    "null" to 0
-                )
-            )
+            "{a:10,b:20,c:null,null:0}", encode(mapOf("a" to 10, "b" to 20, "c" to null, "null" to 0))
         )
     }
 
@@ -101,16 +92,14 @@ class SerializationTest {
     @Test
     fun `polymorphic type is serialized correctly`() {
         assertEquals(
-            "{obj:{type:\"impl\",integer:42}}",
-            encode(Wrapper<DefaultInterface>(DefaultImpl(42)))
+            "{obj:{type:\"impl\",integer:42}}", encode(Wrapper<DefaultInterface>(DefaultImpl(42)))
         )
     }
 
     @Test
     fun `customized polymorphic type is serialized correctly`() {
         assertEquals(
-            "{obj:{category:\"impl\",name:null}}",
-            encode(Wrapper<CustomInterface>(CustomImpl(null)))
+            "{obj:{category:\"impl\",name:null}}", encode(Wrapper<CustomInterface>(CustomImpl(null)))
         )
     }
 
@@ -119,8 +108,7 @@ class SerializationTest {
         val json5 = Json5 { classDiscriminator = "kind" }
 
         assertEquals(
-            "{kind:\"impl\",integer:50}",
-            json5.encodeToString<DefaultInterface>(DefaultImpl(50))
+            "{kind:\"impl\",integer:50}", json5.encodeToString<DefaultInterface>(DefaultImpl(50))
         )
     }
 
@@ -129,8 +117,7 @@ class SerializationTest {
         val json5 = Json5 { classDiscriminator = "kind" }
 
         assertEquals(
-            "{category:\"impl\",name:\"abc\"}",
-            json5.encodeToString<CustomInterface>(CustomImpl("abc"))
+            "{category:\"impl\",name:\"abc\"}", json5.encodeToString<CustomInterface>(CustomImpl("abc"))
         )
     }
 

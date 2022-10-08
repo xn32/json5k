@@ -23,22 +23,22 @@ private fun checkFunc(func: ((Char) -> Boolean), positives: Iterable<Char>, nega
 
 class CharHelpersTest {
     @Test
-    fun `isUnicodeLetter function works correctly`() {
+    fun `isUnicodeLetter function works`() {
         checkFunc(Char::isUnicodeLetter, UNICODE_LETTERS, UNICODE_OTHERS + DECIMAL_DIGITS + OTHER_CHARS)
     }
 
     @Test
-    fun `isUnicodeOther function works correctly`() {
+    fun `isUnicodeOther function works`() {
         checkFunc(Char::isUnicodeOther, UNICODE_OTHERS, UNICODE_LETTERS + DECIMAL_DIGITS + OTHER_CHARS)
     }
 
     @Test
-    fun `isDecimalDigit works correctly`() {
+    fun `isDecimalDigit works`() {
         checkFunc(Char::isDecimalDigit, DECIMAL_DIGITS, UNICODE_LETTERS + UNICODE_OTHERS + OTHER_CHARS)
     }
 
     @Test
-    fun `isHexDigit works correctly`() {
+    fun `isHexDigit works`() {
         checkFunc(Char::isHexDigit, HEX_DIGITS, UNICODE_OTHERS + OTHER_CHARS)
     }
 }

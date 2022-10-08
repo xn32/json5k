@@ -22,7 +22,7 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
     }
 
     private fun writeQuoted(sequence: CharSequence) {
-        writer.appendQuoted(outputStrategy.quoteChar, sequence)
+        writer.appendQuoted(outputStrategy.quoteCharacter, sequence)
     }
 
     private fun writeVisualSep(levelOffset: Int = 0) {
