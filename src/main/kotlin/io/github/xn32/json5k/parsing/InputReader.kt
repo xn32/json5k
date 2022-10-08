@@ -16,6 +16,7 @@ internal data class ReaderPosition(val line: UInt, val column: UInt) {
 internal fun InputReader.peekOrNull(): Char? = if (!done) peek() else null
 internal fun InputReader.consumeOrNull(): Char? = if (!done) consume() else null
 
+internal fun InputReader.consumeAll(): String = consumeWhile { true }
 internal fun InputReader.consumeWhile(predicate: (Char) -> Boolean): String {
     val builder = StringBuilder()
     while (!done && predicate(peek()))
@@ -29,7 +30,7 @@ internal class StreamReader(
     private val lineTerminators: Set<Char>,
     private val honorCrLf: Boolean
 ) : InputReader {
-    private val reader = inputStream.bufferedReader()
+    private val reader = inputStream.bufferedReader(Charsets.UTF_8)
     private var next: Int = reader.read()
 
     private var line: UInt = 1u

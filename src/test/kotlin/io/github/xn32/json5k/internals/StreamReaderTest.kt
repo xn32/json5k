@@ -1,23 +1,23 @@
 package io.github.xn32.json5k.internals
 
 import io.github.xn32.json5k.checkPosition
-import io.github.xn32.json5k.parsing.StreamReader
-import io.github.xn32.json5k.parsing.consumeOrNull
-import io.github.xn32.json5k.parsing.consumeWhile
-import io.github.xn32.json5k.parsing.peekOrNull
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import io.github.xn32.json5k.parsing.*
+import java.io.ByteArrayInputStream
+import kotlin.test.*
 
 private const val SAMPLE_INPUT = "abc/def"
-private fun getSampleReader() = getStreamReader(SAMPLE_INPUT)
 
 class StreamReaderTest {
     @Test
+    fun `input stream is interpreted as UTF-8`() {
+        val chars = ByteArrayInputStream(intArrayOf(0x0, 0xF0, 0x9F, 0x8E, 0xBC).toByteArray())
+        val reader = StreamReader(chars, lineTerminators = setOf(), honorCrLf = false)
+        assertEquals("\u0000\ud83c\udfbc", reader.consumeAll())
+    }
+
+    @Test
     fun `input sequence is consumed correctly`() {
-        val reader = getSampleReader()
+        val reader = getStreamReader(SAMPLE_INPUT)
         SAMPLE_INPUT.forEach { char ->
             assertEquals(char, reader.consume())
         }
@@ -25,7 +25,7 @@ class StreamReaderTest {
 
     @Test
     fun `completed stream is done`() {
-        val reader = getSampleReader()
+        val reader = getStreamReader(SAMPLE_INPUT)
         assertFalse(reader.done)
         repeat(SAMPLE_INPUT.length) {
             reader.consume()
@@ -38,20 +38,20 @@ class StreamReaderTest {
 
     @Test
     fun `consumeWhile helper works correctly`() {
-        val reader = getSampleReader()
+        val reader = getStreamReader(SAMPLE_INPUT)
         assertEquals("abc", reader.consumeWhile(Char::isLetter))
     }
 
     @Test
     fun `first element can be peeked`() {
-        val reader = getSampleReader()
+        val reader = getStreamReader(SAMPLE_INPUT)
         assertEquals(SAMPLE_INPUT.first(), reader.peek())
         assertEquals(SAMPLE_INPUT.first(), reader.consume())
     }
 
     @Test
     fun `line-counting reader works for single line`() {
-        val reader = getSampleReader()
+        val reader = getStreamReader(SAMPLE_INPUT)
 
         var col = 1
         while (!reader.done) {
@@ -92,12 +92,14 @@ class StreamReaderTest {
     }
 }
 
+private fun IntArray.toByteArray(): ByteArray = map(Int::toByte).toByteArray()
+
 private fun getStreamReader(
     inputString: String,
     lineTerminators: Set<Char> = setOf('\r', '\n'),
     honorCrLf: Boolean = true
 ) = StreamReader(
-    inputString.byteInputStream(),
+    inputString.byteInputStream(Charsets.UTF_8),
     lineTerminators,
     honorCrLf
 )
