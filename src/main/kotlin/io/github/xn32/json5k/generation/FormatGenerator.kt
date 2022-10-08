@@ -11,6 +11,7 @@ import java.io.OutputStream
 import java.io.Writer
 
 private const val INDENT_CHAR = ' '
+private const val NEWLINE_SEQUENCE = "\n"
 
 internal class FormatGenerator(stream: OutputStream, private val outputStrategy: OutputStrategy) : Flushable {
     private val writer: BufferedWriter = stream.bufferedWriter(Charsets.UTF_8)
@@ -30,7 +31,7 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
             return
         }
 
-        writer.newLine()
+        writer.write(NEWLINE_SEQUENCE)
         repeat(outputStrategy.indentationWith * (tracker.nestingLevel + levelOffset)) {
             writer.write(INDENT_CHAR.code)
         }
