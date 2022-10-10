@@ -3,7 +3,7 @@
 [![Build](https://github.com/xn32/json5k/actions/workflows/build.yml/badge.svg)](https://github.com/xn32/json5k/actions/workflows/build.yml)
 
 This is an experimental [JSON5](https://json5.org/) library for the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) framework.
-Targeting the Java Virtual Machine (JVM), it serializes Kotlin object hierarchies into standard-compliant JSON5 output and vice versa.
+Targeting the JVM, it serializes Kotlin object hierarchies into standard-compliant JSON5 output and vice versa.
 
 ## Key features
 
@@ -23,10 +23,9 @@ This repository contains a Gradle setup that compiles the library into a JAR fil
 
 ### Recommended versions
 
-json5k was tested against the following versions of
-the [Kotlin compiler](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm),
-the [serialization plugin](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.serialization),
-and the [serialization runtime](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-serialization-core/):
+json5k was tested against the following [Kotlin compiler](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm),
+[serialization plugin](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.serialization),
+and [serialization runtime](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-serialization-core/) versions:
 
 | json5k | Kotlin compiler | Serialization plugin | Serialization runtime |
 |--------|-----------------|----------------------|-----------------------|
