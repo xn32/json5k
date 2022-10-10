@@ -16,7 +16,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.0")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.0")
 }
 
 tasks.test {

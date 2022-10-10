@@ -1,14 +1,17 @@
 # json5k
+
 [![Build](https://github.com/xn32/json5k/actions/workflows/build.yml/badge.svg)](https://github.com/xn32/json5k/actions/workflows/build.yml)
 
-This is an experimental version of a [JSON5](https://json5.org/) binding for the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) framework.
+This is an experimental [JSON5](https://json5.org/) library for the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) framework.
+Targeting the Java Virtual Machine (JVM), it serializes Kotlin object hierarchies into standard-compliant JSON5 output and vice versa.
 
-It is currently limited to the JVM and supports the following key features:
+## Key features
+
 - Compliance with [v1.0.0](https://spec.json5.org/1.0.0/) of the JSON5 specification
-- Rejection of duplicate keys during the deserialization of JSON5 objects
-- Polymorphic types and configurable class discriminator names
-- Carefully constructed error messages for deserialization errors
-- Serialization of comments for class properties
+- Rejection of duplicate keys when parsing JSON5 objects
+- Support for polymorphic types and configurable class discriminator names
+- Carefully composed error messages for deserialization errors
+- Support for the serialization of comments for class properties
 
 Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still to be done.
 
@@ -16,9 +19,22 @@ Bug reports and other feedback are highly welcome, for example via the [issue tr
 
 ## Setup instructions
 
-This repository contains a Gradle setup that compiles the binding into a single Java library. Use this library according to your needs.
+This repository contains a Gradle setup that compiles the library into a JAR file. Use this file according to your needs.
 
-For evaluation purposes, the easiest solution might be to install it to your local Maven repository:
+### Recommended versions
+
+json5k was tested against the following versions of
+the [Kotlin compiler](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm),
+the [serialization plugin](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.serialization),
+and the [serialization runtime](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-serialization-core/):
+
+| json5k | Kotlin compiler | Serialization plugin | Serialization runtime |
+|--------|-----------------|----------------------|-----------------------|
+| v0.1.0 | v1.7.10         | v1.7.10              | v1.4.0                |
+
+### Usage from Gradle
+
+For evaluation purposes, the easiest solution might be to install the library to your local Maven repository:
 ```bash
 ./gradlew publishToMavenLocal
 ```
@@ -31,7 +47,6 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
     mavenLocal {
         content {
             includeGroup("io.github.xn32")
@@ -40,7 +55,6 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.0")
     implementation("io.github.xn32:json5k:0.2.0-SNAPSHOT")
 }
 ```
@@ -50,6 +64,7 @@ However, keep the [limitations](https://docs.gradle.org/7.5/userguide/declaring_
 ## Usage examples
 
 ### Non-hierarchical values
+
 ```kotlin
 import io.github.xn32.json5k.Json5
 import kotlinx.serialization.decodeFromString
@@ -77,6 +92,7 @@ Json5.decodeFromString<List<Double>>("[ 1.0,,")
 ```
 
 ### Serializable classes
+
 ```kotlin
 import io.github.xn32.json5k.Json5
 import kotlinx.serialization.Serializable
@@ -100,6 +116,7 @@ Json5.decodeFromString<Person>("{ name: 'Carl', age: 42, age: 10 }")
 ```
 
 ### Classes with `@SerialName` annotations
+
 ```kotlin
 import io.github.xn32.json5k.Json5
 import kotlinx.serialization.SerialName
@@ -122,6 +139,7 @@ Json5.decodeFromString<IntWrapper>("{ int: 10 }")
 ```
 
 ### Polymorphic types
+
 ```kotlin
 import io.github.xn32.json5k.ClassDiscriminator
 import io.github.xn32.json5k.Json5
@@ -150,6 +168,7 @@ Json5.decodeFromString<Producer>("{ init: 0 }")
 ```
 
 ### Serialization of comments for class properties
+
 ```kotlin
 import io.github.xn32.json5k.Json5
 import io.github.xn32.json5k.SerialComment
@@ -197,6 +216,7 @@ Running this code will produce the following output:
 ```
 
 ### Configuration options
+
 Control generated JSON5 output as follows:
 ```kotlin
 import io.github.xn32.json5k.Json5
