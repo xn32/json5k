@@ -1,6 +1,7 @@
 package io.github.xn32.json5k.binding
 
 import io.github.xn32.json5k.Json5
+import io.github.xn32.json5k.SerialComment
 import io.github.xn32.json5k.encodeToStream
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -173,4 +174,39 @@ class SerializationTest {
 
         assertEquals("20", str)
     }
+
+    @Test
+    fun `serial comments are trimmed and added to pretty-print output`() {
+        val json5 = Json5 {
+            prettyPrint = true
+        }
+
+        @Serializable
+        data class Point(
+            @SerialComment("First comment")
+            val x: Int,
+
+            @SerialComment("\tSecond comment")
+            val y: Int,
+
+            @SerialComment("\r\n\tThird comment (spanning\r\n\tmultiple lines)")
+            val z: Int,
+        )
+
+        assertEquals(
+            """
+                {
+                    // First comment
+                    x: 400,
+                    // Second comment
+                    y: 500,
+                    // Third comment (spanning
+                    // multiple lines)
+                    z: 600
+                }
+            """.trimIndent(),
+            json5.encodeToString(Point(400, 500, 600))
+        )
+    }
+
 }

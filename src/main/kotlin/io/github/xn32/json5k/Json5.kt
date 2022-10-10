@@ -12,6 +12,7 @@ import io.github.xn32.json5k.serialization.MainEncoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InheritableSerialInfo
+import kotlinx.serialization.SerialInfo
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.builtins.serializer
@@ -40,6 +41,11 @@ fun Json5(actions: ConfigBuilder.() -> Unit): Json5 {
 @InheritableSerialInfo
 @Target(AnnotationTarget.CLASS)
 annotation class ClassDiscriminator(val discriminator: String)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Target(AnnotationTarget.PROPERTY)
+@SerialInfo
+annotation class SerialComment(val value: String)
 
 private fun ConfigBuilder.toImpl(): Json5 {
     return Json5Impl(serializersModule ?: EmptySerializersModule(), toSettings())

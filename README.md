@@ -7,8 +7,8 @@ It is currently limited to the JVM and supports the following key features:
 - Compliance with [v1.0.0](https://spec.json5.org/1.0.0/) of the JSON5 specification
 - Rejection of duplicate keys during the deserialization of JSON5 objects
 - Polymorphic types and configurable class discriminator names
-- Various configuration options to control the serialization process
 - Carefully constructed error messages for deserialization errors
+- Serialization of comments for class properties
 
 Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still to be done.
 
@@ -149,6 +149,53 @@ Json5.decodeFromString<Producer>("{ init: 0 }")
     // MissingFieldError: missing field 'mode' in object at position 1:1
 ```
 
+### Serialization of comments for class properties
+```kotlin
+import io.github.xn32.json5k.Json5
+import io.github.xn32.json5k.SerialComment
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+
+@Serializable
+data class Person(
+    val name: String,
+    val age: UInt? = null
+)
+
+@Serializable
+data class Event(
+    @SerialComment("First day of the event")
+    val date: String,
+    @SerialComment("Registered attendees")
+    val attendees: List<Person>
+)
+
+val json5 = Json5 {
+    prettyPrint = true
+}
+
+println(
+    json5.encodeToString(
+        Event("2022-10-04", listOf(Person("Emma", 31u)))
+    )
+)
+```
+
+Running this code will produce the following output:
+```
+{
+    // First day of the event
+    date: "2022-10-04",
+    // Registered attendees
+    attendees: [
+        {
+            name: "Emma",
+            age: 31
+        }
+    ]
+}
+```
+
 ### Configuration options
 Control generated JSON5 output as follows:
 ```kotlin
@@ -167,7 +214,7 @@ val json5 = Json5 {
 @Serializable
 data class Person(val name: String, val age: UInt? = null)
 
-json5.encodeToString(Person("Oliver"))
+println(json5.encodeToString(Person("Oliver")))
 ```
 This will result in the following output:
 ```
@@ -190,7 +237,7 @@ val json5 = Json5 {
 @Serializable
 data class Person(val name: String, val age: UInt? = null)
 
-json5.decodeFromString<Person>("{ name: 'x', age: 11, name: 'y' }")
+println(json5.decodeFromString<Person>("{ name: 'x', age: 11, name: 'y' }"))
 ```
 
 In this case, the most recently written `name` value is kept:

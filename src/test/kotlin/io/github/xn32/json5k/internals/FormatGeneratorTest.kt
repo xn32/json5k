@@ -289,6 +289,67 @@ class FormatGeneratorTest {
             put(Token.Str("12'34\"56"))
         })
     }
+
+    @Test
+    fun `serial comments are not present in compressed output`() {
+        assertEquals("{a:10}", generate(COMPRESSED) {
+            put(Token.BeginObject)
+            writeComment("comment")
+            put(Token.MemberName("a"))
+            put(Token.SignedInteger(10))
+            put(Token.EndObject)
+        })
+    }
+
+    @Test
+    fun `serial comments are added to human-readable output`() {
+        assertEquals(
+            """
+                {
+                    a: 11,
+                    // First comment
+                    //  Second comment
+                    //  spanning two lines
+                    // Third comment
+                    b: 12
+                }
+            """.trimIndent(),
+            generate(HUMAN_READABLE) {
+                put(Token.BeginObject)
+                put(Token.MemberName("a"))
+                put(Token.SignedInteger(11))
+                writeComment("First comment")
+                writeComment(" Second comment\n spanning two lines")
+                writeComment("Third comment")
+                put(Token.MemberName("b"))
+                put(Token.SignedInteger(12))
+                put(Token.EndObject)
+            })
+    }
+
+    @Test
+    fun `line terminators in serial comments are translated`() {
+        assertEquals(
+            """
+                {
+                    // a
+                    // b
+                    // c
+                    // d
+                    // e
+                    // f
+                    x: null
+                }
+            """.trimIndent(),
+            generate(HUMAN_READABLE) {
+                put(Token.BeginObject)
+                writeComment("a\r\nb\nc\rd\u2028e\u2029f")
+                put(Token.MemberName("x"))
+                put(Token.Null)
+                put(Token.EndObject)
+            }
+        )
+    }
 }
 
 private fun generate(strategy: OutputStrategy, block: FormatGenerator.() -> Unit) = ByteArrayOutputStream().use {

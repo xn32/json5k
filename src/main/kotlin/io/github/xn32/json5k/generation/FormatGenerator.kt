@@ -11,7 +11,8 @@ import java.io.OutputStream
 import java.io.Writer
 
 private const val INDENT_CHAR = ' '
-private const val NEWLINE_SEQUENCE = "\n"
+private const val OUTPUT_LINE_TERMINATOR = "\n"
+private val LINE_DELIMITERS = arrayOf("\r\n") + Specification.LINE_TERMINATORS.map(Char::toString)
 
 internal class FormatGenerator(stream: OutputStream, private val outputStrategy: OutputStrategy) : Flushable {
     private val writer: BufferedWriter = stream.bufferedWriter(Charsets.UTF_8)
@@ -20,6 +21,29 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
     fun put(token: Token) {
         handleToken(token)
         tracker.supply(token)
+    }
+
+    fun writeComment(comment: String) {
+        check(tracker.inObjectStruct)
+        if (tracker.nextTokenType == TokenType.COMMA) {
+            writeComma()
+        }
+
+        check(tracker.nextTokenType == TokenType.NEXT_ITEM)
+        if (outputStrategy !is OutputStrategy.HumanReadable) {
+            return
+        }
+
+        @Suppress("SpreadOperator")
+        for (line in comment.splitToSequence(*LINE_DELIMITERS)) {
+            writeVisualSep()
+            writer.append("// $line")
+        }
+    }
+
+    private fun writeComma() {
+        writer.append(',')
+        tracker.supplyComma()
     }
 
     private fun writeQuoted(sequence: CharSequence) {
@@ -31,7 +55,7 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
             return
         }
 
-        writer.write(NEWLINE_SEQUENCE)
+        writer.write(OUTPUT_LINE_TERMINATOR)
         repeat(outputStrategy.indentationWith * (tracker.nestingLevel + levelOffset)) {
             writer.write(INDENT_CHAR.code)
         }
@@ -52,8 +76,7 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
         }
 
         if (tracker.nextTokenType == TokenType.COMMA) {
-            writer.append(',')
-            tracker.supplyComma()
+            writeComma()
 
             if (token is Token.BeginToken && outputStrategy is OutputStrategy.HumanReadable) {
                 writer.append(' ')

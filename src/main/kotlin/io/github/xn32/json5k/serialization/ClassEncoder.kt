@@ -1,5 +1,6 @@
 package io.github.xn32.json5k.serialization
 
+import io.github.xn32.json5k.SerialComment
 import io.github.xn32.json5k.format.Token
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -14,6 +15,10 @@ internal class ClassEncoder(parent: MainEncoder, private val noDelimiters: Boole
     }
 
     override fun getEncoderFor(descriptor: SerialDescriptor, index: Int): Encoder {
+        for (comment in descriptor.getElementAnnotations(index).filterIsInstance<SerialComment>()) {
+            generator.writeComment(comment.value.trimIndent())
+        }
+
         generator.put(Token.MemberName(descriptor.getElementName(index)))
         return super.getEncoderFor(descriptor, index)
     }
