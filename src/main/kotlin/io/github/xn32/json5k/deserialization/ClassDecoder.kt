@@ -20,7 +20,7 @@ internal class ClassDecoder(parent: MainDecoder) : StructDecoder(parent, Token.B
                 val name = token.name
                 parser.next()
 
-                if (parent.settings.failOnDuplicateKeys && !specifiedKeys.add(name)) {
+                if (!specifiedKeys.add(name)) {
                     throw DuplicateKeyError(name, pos)
                 }
 

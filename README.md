@@ -8,10 +8,10 @@ Targeting the JVM, it serializes Kotlin object hierarchies into standard-complia
 ## Key features
 
 - Compliance with [v1.0.0](https://spec.json5.org/1.0.0/) of the JSON5 specification
-- Rejection of duplicate keys when parsing JSON5 objects
 - Support for polymorphic types and configurable class discriminator names
 - Carefully composed error messages for deserialization errors
 - Support for the serialization of comments for class properties
+- Rejection of duplicate keys during deserialization
 
 Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still to be done.
 
@@ -241,27 +241,6 @@ This will result in the following output:
   'name': 'Oliver',
   'age': null
 }
-```
-
-Accept duplicate keys in JSON5 input as follows:
-```kotlin
-import io.github.xn32.json5k.Json5
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-
-val json5 = Json5 {
-    failOnDuplicateKeys = false
-}
-
-@Serializable
-data class Person(val name: String, val age: UInt? = null)
-
-println(json5.decodeFromString<Person>("{ name: 'x', age: 11, name: 'y' }"))
-```
-
-In this case, the most recently written `name` value is kept:
-```
-Person(name=y, age=11)
 ```
 
 ### Further examples

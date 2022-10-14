@@ -1,7 +1,6 @@
 package io.github.xn32.json5k.config
 
 internal data class Settings(
-    val failOnDuplicateKeys: Boolean,
     val classDiscriminator: String,
     val encodeDefaults: Boolean,
     val outputStrategy: OutputStrategy,
@@ -24,7 +23,6 @@ internal sealed interface OutputStrategy {
 }
 
 internal fun ConfigBuilder.toSettings(): Settings = Settings(
-    failOnDuplicateKeys = failOnDuplicateKeys,
     classDiscriminator = classDiscriminator,
     encodeDefaults = encodeDefaults,
     outputStrategy = if (prettyPrint) {

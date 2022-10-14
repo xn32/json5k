@@ -2,8 +2,8 @@ package io.github.xn32.json5k.deserialization
 
 import io.github.xn32.json5k.DuplicateKeyError
 import io.github.xn32.json5k.format.Token
-import io.github.xn32.json5k.unsupportedKeyType
 import io.github.xn32.json5k.parsing.LookaheadParser
+import io.github.xn32.json5k.unsupportedKeyType
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -40,7 +40,7 @@ internal class MapDecoder(parent: MainDecoder) : StructDecoder(parent, Token.Beg
     }
 }
 
-private class KeyDecoder(private val parent: MainDecoder) : Decoder {
+private class KeyDecoder(parent: MainDecoder) : Decoder {
     override val serializersModule: SerializersModule = parent.serializersModule
     private val specifiedKeys: MutableSet<String> = mutableSetOf()
     private val parser: LookaheadParser<Token> = parent.parser
@@ -73,7 +73,7 @@ private class KeyDecoder(private val parent: MainDecoder) : Decoder {
         check(token is Token.MemberName)
 
         val name = token.name
-        if (parent.settings.failOnDuplicateKeys && !specifiedKeys.add(name)) {
+        if (!specifiedKeys.add(name)) {
             throw DuplicateKeyError(name, pos)
         }
 

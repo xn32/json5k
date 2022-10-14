@@ -75,18 +75,6 @@ class DeserializationTest {
     }
 
     @Test
-    fun `duplicate keys can be accepted`() {
-        @Serializable
-        data class Class(val key: Int)
-
-        val format = Json5 {
-            failOnDuplicateKeys = false
-        }
-
-        assertEquals(Class(3), format.decodeFromString("{ key: 1, key: 2, key: 3 }"))
-    }
-
-    @Test
     fun `top-level map is decoded`() {
         assertEquals(mapOf("first" to 10, "second" to 433), decode("{ first: 10, second: 433 }"))
     }

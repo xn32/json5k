@@ -6,13 +6,11 @@ import kotlinx.serialization.modules.SerializersModule
 class ConfigBuilder {
     var serializersModule: SerializersModule? = null
 
-    var failOnDuplicateKeys: Boolean = true
     var classDiscriminator: String = "type"
+    var encodeDefaults: Boolean = false
 
     var prettyPrint: Boolean = false
     var indentationWidth: Int = 4
     var quoteMemberNames: Boolean = false
     var useSingleQuotes: Boolean = false
-
-    var encodeDefaults: Boolean = false
 }
