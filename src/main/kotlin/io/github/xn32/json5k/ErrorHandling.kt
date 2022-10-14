@@ -38,10 +38,10 @@ class MissingFieldError internal constructor(val key: String, pos: ReaderPositio
     DecodingError("missing field '$key' in object", pos)
 
 class UnknownKeyError internal constructor(val key: String, pos: ReaderPosition) :
-    DecodingError("unknown key '$key' specified", pos)
+    DecodingError("unknown key '$key'", pos)
 
 class DuplicateKeyError internal constructor(val key: String, pos: ReaderPosition) :
-    DecodingError("duplicate key '$key' specified", pos)
+    DecodingError("duplicate key '$key'", pos)
 
 class UnexpectedValueError internal constructor(baseMsg: String, pos: ReaderPosition) :
     DecodingError(baseMsg, pos)

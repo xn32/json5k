@@ -45,7 +45,8 @@ class DeserializationTest {
             decode<UnsignedWrapper>("{ value: -1 }")
         }
 
-        assertContains(error.message, "range [0..255]")
+        assertContains(error.message, "unsigned integer in range [0..255] expected at position")
+        error.checkPosition(1, 10)
     }
 
     @Test
@@ -54,7 +55,7 @@ class DeserializationTest {
             decode<Wrapper<Int>>("{ obj: { a: 10 }}")
         }
 
-        assertContains(error.message, "integer expected")
+        assertContains(error.message, "integer expected at position")
         error.checkPosition(1, 8)
     }
 
@@ -64,7 +65,7 @@ class DeserializationTest {
             decode<Map<String, Int>>("40")
         }
 
-        assertContains(error.message, "object expected")
+        assertContains(error.message, "object expected at position")
         error.checkPosition(1, 1)
     }
 
@@ -74,7 +75,7 @@ class DeserializationTest {
             decode<List<Int>>("true")
         }
 
-        assertContains(error.message, "array expected")
+        assertContains(error.message, "array expected at position")
         error.checkPosition(1, 1)
     }
 
@@ -102,9 +103,13 @@ class DeserializationTest {
         @Serializable
         data class Class(val first: Int, val second: Long)
 
-        assertFailsWith<DuplicateKeyError> {
+        val error = assertFailsWith<DuplicateKeyError> {
             decode<Class>("{ first: 10, second: 20, first: 30 }")
         }
+
+        assertContains(error.message, "duplicate key 'first' at position")
+        assertEquals("first", error.key)
+        error.checkPosition(1, 26)
     }
 
     @Test
@@ -118,8 +123,9 @@ class DeserializationTest {
             decode<Map<String, Short>>("{ a: 10, a: 10 }")
         }
 
-        assertEquals(10u, error.column)
+        assertContains(error.message, "duplicate key 'a' at position")
         assertEquals("a", error.key)
+        error.checkPosition(1, 10)
     }
 
     @Test
@@ -137,7 +143,6 @@ class DeserializationTest {
         assertFailsWith<UnsupportedOperationException> {
             decode<Map<Boolean, Int>>("{ true: 10 }")
         }
-
     }
 
     @Test
@@ -147,12 +152,17 @@ class DeserializationTest {
 
     @Test
     fun `implicit conversion to integers is prohibited`() {
-        assertFailsWith<UnexpectedValueError> {
+        val floatError = assertFailsWith<UnexpectedValueError> {
             decode<Long>("10.0")
         }
 
-        assertFailsWith<UnexpectedValueError> {
+        val expError = assertFailsWith<UnexpectedValueError> {
             decode<Short>("1e2")
+        }
+
+        listOf(floatError, expError).forEach { error ->
+            assertContains(error.message, "integer expected at position")
+            error.checkPosition(1, 1)
         }
     }
 
@@ -167,6 +177,7 @@ class DeserializationTest {
             decode<SingletonWrapper>("{ obj: { unknown: 0 } }")
         }
 
+        assertContains(error.message, "unknown key 'unknown' at position")
         assertEquals("unknown", error.key)
         error.checkPosition(1, 10)
     }
@@ -188,25 +199,37 @@ class DeserializationTest {
 
     @Test
     fun `unknown class discriminator value is detected`() {
-        assertFailsWith<UnexpectedValueError> {
+        val error = assertFailsWith<UnexpectedValueError> {
             decode<DefaultInterface>("{ type: 'unknown' }")
-        }.checkPosition(1, 9)
+        }
+
+        assertContains(error.message, "unknown class name at position")
+        error.checkPosition(1, 9)
     }
 
     @Test
     fun `unknown object key is reported`() {
         @Serializable
         data class Entity(val x: Int)
-        assertFailsWith<UnknownKeyError> {
+
+        val error = assertFailsWith<UnknownKeyError> {
             decode<Entity>("{ abc: 10 }")
-        }.checkPosition(1, 3)
+        }
+
+        assertContains(error.message, "unknown key 'abc' at position")
+        assertEquals("abc", error.key)
+        error.checkPosition(1, 3)
     }
 
     @Test
     fun `repeated polymorphic discriminator is recognized as error`() {
-        assertFailsWith<DuplicateKeyError> {
-            decode<DefaultInterface>("{ type: 'valid', type: 'unknown' }")
-        }.checkPosition(1, 18)
+        val error = assertFailsWith<DuplicateKeyError> {
+            decode<DefaultInterface>("{ type: 'valid', type: 'valid' }")
+        }
+
+        assertContains(error.message, "duplicate key 'type' at position")
+        assertEquals("type", error.key)
+        error.checkPosition(1, 18)
     }
 
     @Test
@@ -255,11 +278,12 @@ class DeserializationTest {
     fun `input stream is read to the end`() {
         val str = "{}x"
         str.byteInputStream().use {
-            val err = assertFailsWith<CharError> {
+            val error = assertFailsWith<CharError> {
                 Json5.decodeFromStream(it)
             }
 
-            assertEquals('x', err.char)
+            error.checkPosition(1, 3)
+            assertEquals('x', error.char)
         }
     }
 
@@ -268,12 +292,13 @@ class DeserializationTest {
         @Serializable
         data class Dummy(val a: Int, val b: Int)
 
-        val err = assertFailsWith<MissingFieldError> {
+        val error = assertFailsWith<MissingFieldError> {
             decode<Dummy>("{ b: 10 }")
         }
 
-        assertEquals("a", err.key)
-        err.checkPosition(1, 1)
+        assertContains(error.message, "missing field 'a' in object at position")
+        assertEquals("a", error.key)
+        error.checkPosition(1, 1)
     }
 
     @Test
@@ -288,6 +313,7 @@ class DeserializationTest {
             decode<Outer>("{ inner: { x: 10 } }")
         }
 
+        assertContains(outerError.message, "missing field 'y' in object at position")
         assertEquals("y", outerError.key)
         outerError.checkPosition(1, 1)
 
@@ -295,15 +321,20 @@ class DeserializationTest {
             decode<Outer>("{ inner: {}, y: 4 }")
         }
 
+        assertContains(innerError.message, "missing field 'x' in object at position")
         assertEquals("x", innerError.key)
         innerError.checkPosition(1, 10)
     }
 
     @Test
     fun `missing field in polymorphic class is detected`() {
-        assertFailsWith<MissingFieldError> {
+        val error = assertFailsWith<MissingFieldError> {
             decode<DefaultInterface>("{ type: 'valid' }")
-        }.checkPosition(1, 1)
+        }
+
+        assertContains(error.message, "missing field 'integer' in object at position")
+        assertEquals("integer", error.key)
+        error.checkPosition(1, 1)
     }
 
     @Test
@@ -315,7 +346,9 @@ class DeserializationTest {
             decode<Obj>("{ x: 5, x: 10 }")
         }
 
+        assertContains(error.message, "duplicate key 'x' at position")
         assertEquals("x", error.key)
+        error.checkPosition(1, 9)
     }
 
     @Test
@@ -324,7 +357,9 @@ class DeserializationTest {
             decode<Map<String, Int>>("{ a: 10, b: 20, a: 20 }")
         }
 
+        assertContains(error.message, "duplicate key 'a' at position")
         assertEquals("a", error.key)
+        error.checkPosition(1, 17)
     }
 
     @Test
@@ -336,7 +371,9 @@ class DeserializationTest {
             decode<Obj>("{ x: 5, y: 10 }")
         }
 
+        assertContains(error.message, "unknown key 'y' at position")
         assertEquals("y", error.key)
+        error.checkPosition(1, 9)
     }
 
     @Test
@@ -345,6 +382,7 @@ class DeserializationTest {
             decode<Byte>("5000")
         }
 
-        assertContains(error.message, "in range [-128..127]")
+        assertContains(error.message, "signed integer in range [-128..127] expected at position")
+        error.checkPosition(1, 1)
     }
 }

@@ -43,7 +43,7 @@ internal class MainDecoder(
         } catch (e: SerializationException) {
             if (polymorphicDecoder != null && e.message?.contains("polymorphic") == true) {
                 val classNamePos = polymorphicDecoder?.classNamePos ?: beginPos!!
-                throw UnexpectedValueError("unknown class name specified", classNamePos)
+                throw UnexpectedValueError("unknown class name", classNamePos)
             }
 
             throw e
