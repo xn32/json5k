@@ -203,7 +203,7 @@ class DeserializationTest {
             decode<DefaultInterface>("{ type: 'unknown' }")
         }
 
-        assertContains(error.message, "unknown class name at position")
+        assertContains(error.message, "unknown class name 'unknown' at position")
         error.checkPosition(1, 9)
     }
 

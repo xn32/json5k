@@ -38,12 +38,17 @@ internal class MainDecoder(
             polymorphicDecoder = null
             return res
         } catch (e: MissingFieldException) {
+            // Throw the library version of a MissingFieldException (for consistency):
             val firstField = e.missingFields[0]
             throw MissingFieldError(firstField, beginPos!!)
         } catch (e: SerializationException) {
-            if (polymorphicDecoder != null && e.message?.contains("polymorphic") == true) {
-                val classNamePos = polymorphicDecoder?.classNamePos ?: beginPos!!
-                throw UnexpectedValueError("unknown class name", classNamePos)
+            if (polymorphicDecoder != null && e.message?.contains("polymorphic serialization") == true) {
+                val classNameToken = polymorphicDecoder?.classNameToken
+                if (classNameToken != null) {
+                    // Assume/infer that the error is (probably) caused by a missing serializer:
+                    val className = classNameToken.item.string
+                    throw UnexpectedValueError("unknown class name '$className'", classNameToken.pos)
+                }
             }
 
             throw e

@@ -4,7 +4,6 @@ import io.github.xn32.json5k.MissingFieldError
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.getClassDiscriminator
 import io.github.xn32.json5k.parsing.Event
-import io.github.xn32.json5k.parsing.ReaderPosition
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
@@ -14,11 +13,11 @@ internal class PolymorphicDecoder(
     parent: MainDecoder
 ) : StructDecoder(parent, Token.BeginObject) {
     val classDiscriminator = descriptor.getClassDiscriminator(parent.settings)
-    var classNamePos: ReaderPosition? = null
+    var classNameToken: Event<Token.Str>? = null
         private set
 
     private val eventBuffer: MutableList<Event<Token>> = mutableListOf()
-    private var lastIndex: Int? = null
+    private var nextIndex: Int = 0
 
     init {
         var objectLevel = 1u
@@ -28,7 +27,7 @@ internal class PolymorphicDecoder(
             if (objectLevel == 1u && token == Token.EndObject) {
                 throw MissingFieldError(classDiscriminator, beginEvent.pos)
             } else if (objectLevel == 1u && token is Token.MemberName && token.name == classDiscriminator) {
-                classNamePos = parser.peek().pos
+                classNameToken = parser.peek().mapType()
                 break
             } else if (token == Token.BeginObject) {
                 ++objectLevel
@@ -41,14 +40,12 @@ internal class PolymorphicDecoder(
     }
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
-        val index = when (lastIndex) {
-            null -> 0
+        val index = nextIndex
+        nextIndex = when (nextIndex) {
             0 -> 1
-            1 -> CompositeDecoder.DECODE_DONE
-            else -> error("unexpected call sequence")
+            else -> CompositeDecoder.DECODE_DONE
         }
 
-        lastIndex = index
         return index
     }
 
