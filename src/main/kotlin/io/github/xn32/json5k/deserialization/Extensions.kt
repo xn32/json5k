@@ -8,7 +8,7 @@ import io.github.xn32.json5k.parsing.ReaderPosition
 internal inline fun <reified T : Token.Value> Event<Token>.mapType(): Event<T> = Event(pos, item.getAsType(pos))
 internal inline fun <reified T : Token.Value> Event<Token>.extractType(): T = item.getAsType(pos)
 
-private inline fun <reified T : Token.Value> Token.getAsType(errorPosition: ReaderPosition): T {
+private inline fun <reified T : Token.Value> Token.getAsType(errorPos: ReaderPosition): T {
     if (this !is T) {
         val descriptor = when (T::class) {
             Token.Num::class -> "numeric value"
@@ -18,14 +18,14 @@ private inline fun <reified T : Token.Value> Token.getAsType(errorPosition: Read
             Token.FloatingPoint::class -> "floating point number"
             Token.Bool::class -> "boolean value"
             Token.Str::class -> "string"
-            Token.Null::class -> "null value"
+            Token.Null::class -> "null"
             else -> null
         }
 
-        if (descriptor != null) {
-            throw UnexpectedValueError("$descriptor expected", errorPosition)
+        throw if (descriptor != null) {
+            UnexpectedValueError("$descriptor expected", errorPos)
         } else {
-            throw UnexpectedValueError("unexpected value", errorPosition)
+            UnexpectedValueError("unexpected value", errorPos)
         }
     }
 

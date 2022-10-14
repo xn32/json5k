@@ -49,6 +49,36 @@ class DeserializationTest {
     }
 
     @Test
+    fun `missing value is reported`() {
+        val error = assertFailsWith<UnexpectedValueError> {
+            decode<Wrapper<Int>>("{ obj: { a: 10 }}")
+        }
+
+        assertContains(error.message, "integer expected")
+        error.checkPosition(1, 8)
+    }
+
+    @Test
+    fun `missing object is reported`() {
+        val error = assertFailsWith<UnexpectedValueError> {
+            decode<Map<String, Int>>("40")
+        }
+
+        assertContains(error.message, "object expected")
+        error.checkPosition(1, 1)
+    }
+
+    @Test
+    fun `missing array is reported`() {
+        val error = assertFailsWith<UnexpectedValueError> {
+            decode<List<Int>>("true")
+        }
+
+        assertContains(error.message, "array expected")
+        error.checkPosition(1, 1)
+    }
+
+    @Test
     fun `nullable top-level value is decoded`() {
         assertEquals(50, decode<Int?>("50"))
         assertEquals(null, decode<Int?>("null"))
@@ -133,12 +163,12 @@ class DeserializationTest {
 
         assertEquals(SingletonWrapper(Singleton), decode("{ obj: {} }"))
 
-        val err = assertFailsWith<UnknownKeyError> {
+        val error = assertFailsWith<UnknownKeyError> {
             decode<SingletonWrapper>("{ obj: { unknown: 0 } }")
         }
 
-        err.checkPosition(1, 10)
-        assertEquals(err.key, "unknown")
+        assertEquals("unknown", error.key)
+        error.checkPosition(1, 10)
     }
 
     @Test
@@ -281,20 +311,20 @@ class DeserializationTest {
         @Serializable
         data class Obj(val x: Int)
 
-        val err = assertFailsWith<DuplicateKeyError> {
+        val error = assertFailsWith<DuplicateKeyError> {
             decode<Obj>("{ x: 5, x: 10 }")
         }
 
-        assertEquals("x", err.key)
+        assertEquals("x", error.key)
     }
 
     @Test
     fun `duplicate map key is reported`() {
-        val err = assertFailsWith<DuplicateKeyError> {
+        val error = assertFailsWith<DuplicateKeyError> {
             decode<Map<String, Int>>("{ a: 10, b: 20, a: 20 }")
         }
 
-        assertEquals("a", err.key)
+        assertEquals("a", error.key)
     }
 
     @Test
@@ -302,19 +332,19 @@ class DeserializationTest {
         @Serializable
         data class Obj(val x: Int)
 
-        val err = assertFailsWith<UnknownKeyError> {
+        val error = assertFailsWith<UnknownKeyError> {
             decode<Obj>("{ x: 5, y: 10 }")
         }
 
-        assertEquals("y", err.key)
+        assertEquals("y", error.key)
     }
 
     @Test
     fun `value errors are reported`() {
-        val err = assertFailsWith<UnexpectedValueError> {
+        val error = assertFailsWith<UnexpectedValueError> {
             decode<Byte>("5000")
         }
 
-        assertContains(err.message, "in range [-128..127]")
+        assertContains(error.message, "in range [-128..127]")
     }
 }

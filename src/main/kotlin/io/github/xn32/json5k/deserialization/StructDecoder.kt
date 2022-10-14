@@ -12,7 +12,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 
 @OptIn(ExperimentalSerializationApi::class)
-internal sealed class StructDecoder(protected val parent: MainDecoder, opener: Token) : CompositeDecoder {
+internal sealed class StructDecoder(protected val parent: MainDecoder, opener: Token.BeginToken) : CompositeDecoder {
     override val serializersModule: SerializersModule = parent.serializersModule
     protected val parser: InjectableLookaheadParser<Token> = parent.parser
     protected val beginEvent: Event<Token>
@@ -20,8 +20,14 @@ internal sealed class StructDecoder(protected val parent: MainDecoder, opener: T
     init {
         val event = parent.parser.next()
         val (pos, token) = event
+
         if (token != opener) {
-            throw UnexpectedValueError("unexpected structure", pos)
+            val descriptor = when (opener) {
+                Token.BeginObject -> "object"
+                Token.BeginArray -> "array"
+            }
+
+            throw UnexpectedValueError("$descriptor expected", pos)
         }
 
         beginEvent = event
