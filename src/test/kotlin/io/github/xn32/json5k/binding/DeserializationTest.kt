@@ -127,19 +127,18 @@ class DeserializationTest {
     }
 
     @Test
-    fun `top-level object is decoded`() {
+    fun `singleton object is decoded`() {
         @Serializable
         data class SingletonWrapper(val obj: Singleton)
 
         assertEquals(SingletonWrapper(Singleton), decode("{ obj: {} }"))
 
-        assertFailsWith<UnexpectedValueError> {
+        val err = assertFailsWith<UnknownKeyError> {
             decode<SingletonWrapper>("{ obj: { unknown: 0 } }")
         }
 
-        assertFailsWith<MissingFieldError> {
-            decode<SingletonWrapper>("{}")
-        }
+        err.checkPosition(1, 10)
+        assertEquals(err.key, "unknown")
     }
 
     @Test
@@ -251,6 +250,7 @@ class DeserializationTest {
     fun `missing field is associated with the correct hierarchy level`() {
         @Serializable
         data class Inner(val x: Int)
+
         @Serializable
         data class Outer(val inner: Inner, val y: Int)
 

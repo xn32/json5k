@@ -1,6 +1,6 @@
 package io.github.xn32.json5k.deserialization
 
-import io.github.xn32.json5k.UnexpectedValueError
+import io.github.xn32.json5k.UnknownKeyError
 import io.github.xn32.json5k.format.Token
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
@@ -11,10 +11,12 @@ internal class ObjectDecoder(parent: MainDecoder) : StructDecoder(parent, Token.
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
         val (pos, token) = parser.peek()
-        if (token != Token.EndObject) {
-            throw UnexpectedValueError("singleton object expected", pos)
+
+        if (token is Token.MemberName) {
+            throw UnknownKeyError(token.name, pos)
         }
 
+        check(token is Token.EndObject)
         return CompositeDecoder.DECODE_DONE
     }
 
