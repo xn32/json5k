@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToString
 import java.io.ByteArrayOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 
 private inline fun <reified T> encode(input: T): String = Json5.encodeToString(input)
 
@@ -42,6 +42,7 @@ class SerializationTest {
     fun `class without default values is encoded correctly`() {
         @Serializable
         data class Dummy(val a: Int, val b: Int?)
+
         assertEquals("{a:10,b:null}", encode(Dummy(10, null)))
     }
 
@@ -49,6 +50,7 @@ class SerializationTest {
     fun `default values are not encoded`() {
         @Serializable
         data class Dummy(val a: Short, val b: Short = 40)
+
         assertEquals("{a:11}", encode(Dummy(11)))
     }
 
@@ -57,7 +59,10 @@ class SerializationTest {
         @Serializable
         data class Dummy(val a: Short, val b: Short = 50)
 
-        val json5 = Json5 { encodeDefaults = true }
+        val json5 = Json5 {
+            encodeDefaults = true
+        }
+
         assertEquals("{a:40,b:50}", json5.encodeToString(Dummy(40)))
     }
 
@@ -65,6 +70,7 @@ class SerializationTest {
     fun `serialization of unsigned integers is supported`() {
         @Serializable
         data class UnsignedWrapper(val value: UByte)
+
         assertEquals("{value:255}", encode(UnsignedWrapper(255u)))
     }
 
@@ -72,6 +78,7 @@ class SerializationTest {
     fun `nested class-list structures are encoded`() {
         @Serializable
         data class Container(val id: Int, val parts: List<Container>?)
+
         assertEquals(
             "[{id:1,parts:[{id:3,parts:null}]}]", encode(listOf(Container(1, listOf(Container(3, null)))))
         )
@@ -86,21 +93,33 @@ class SerializationTest {
 
     @Test
     fun `unsupported key type causes error`() {
-        assertFails { encode(mapOf('a' to 2)) }
-        assertFails { encode(mapOf(10 to 0)) }
+        assertFailsWith<UnsupportedOperationException> {
+            encode(mapOf('a' to 2))
+        }
+
+        assertFailsWith<UnsupportedOperationException> {
+            encode(mapOf(10 to 0))
+        }
+    }
+
+    @Test
+    fun `collisions with polymorphic discriminator values are detected`() {
+        assertFailsWith<UnsupportedOperationException> {
+            encode(Wrapper<DefaultInterface>(InvalidDefaultImpl("abc")))
+        }
     }
 
     @Test
     fun `polymorphic type is serialized correctly`() {
         assertEquals(
-            "{obj:{type:\"impl\",integer:42}}", encode(Wrapper<DefaultInterface>(DefaultImpl(42)))
+            "{obj:{type:\"valid\",integer:42}}", encode(Wrapper<DefaultInterface>(DefaultImpl(42)))
         )
     }
 
     @Test
     fun `customized polymorphic type is serialized correctly`() {
         assertEquals(
-            "{obj:{category:\"impl\",name:null}}", encode(Wrapper<CustomInterface>(CustomImpl(null)))
+            "{obj:{category:\"main\",name:null}}", encode(Wrapper<CustomInterface>(CustomImpl(null)))
         )
     }
 
@@ -109,22 +128,27 @@ class SerializationTest {
         val json5 = Json5 { classDiscriminator = "kind" }
 
         assertEquals(
-            "{kind:\"impl\",integer:50}", json5.encodeToString<DefaultInterface>(DefaultImpl(50))
+            "{kind:\"valid\",integer:50}", json5.encodeToString<DefaultInterface>(DefaultImpl(50))
         )
     }
 
     @Test
     fun `local discriminator name overwrites default name`() {
-        val json5 = Json5 { classDiscriminator = "kind" }
+        val json5 = Json5 {
+            classDiscriminator = "kind"
+        }
 
         assertEquals(
-            "{category:\"impl\",name:\"abc\"}", json5.encodeToString<CustomInterface>(CustomImpl("abc"))
+            "{category:\"main\",name:\"abc\"}", json5.encodeToString<CustomInterface>(CustomImpl("abc"))
         )
     }
 
     @Test
     fun `pretty-print mode leads to multi-line output`() {
-        val json5 = Json5 { prettyPrint = true }
+        val json5 = Json5 {
+            prettyPrint = true
+        }
+
         assertEquals(
             """
                 {
@@ -169,7 +193,7 @@ class SerializationTest {
         val stream = ByteArrayOutputStream()
         val str = stream.use {
             Json5.encodeToStream(20, it)
-            it.toString()
+            it.toString(Charsets.UTF_8)
         }
 
         assertEquals("20", str)

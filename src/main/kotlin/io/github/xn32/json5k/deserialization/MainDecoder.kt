@@ -5,6 +5,7 @@ import io.github.xn32.json5k.UnexpectedValueError
 import io.github.xn32.json5k.config.Settings
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.isUnsignedNumber
+import io.github.xn32.json5k.parsing.InjectableLookaheadParser
 import io.github.xn32.json5k.parsing.LookaheadParser
 import io.github.xn32.json5k.parsing.Parser
 import io.github.xn32.json5k.parsing.ReaderPosition
@@ -22,22 +23,27 @@ import kotlinx.serialization.modules.SerializersModule
 @OptIn(ExperimentalSerializationApi::class)
 internal class MainDecoder(
     override val serializersModule: SerializersModule,
-    val parser: LookaheadParser<Token>,
+    val parser: InjectableLookaheadParser<Token>,
     val settings: Settings,
 ) : Decoder {
     private var beginPos: ReaderPosition? = null
+    private var polymorphicDecoder: PolymorphicDecoder? = null
 
     constructor(other: MainDecoder) : this(other.serializersModule, other.parser, other.settings)
 
     override fun <T> decodeSerializableValue(deserializer: DeserializationStrategy<T>): T {
-        return try {
-            super.decodeSerializableValue(deserializer)
+        try {
+            val res = super.decodeSerializableValue(deserializer)
+            beginPos = null
+            polymorphicDecoder = null
+            return res
         } catch (e: MissingFieldException) {
             val firstField = e.missingFields[0]
             throw MissingFieldError(firstField, beginPos!!)
         } catch (e: SerializationException) {
-            if (e.message?.contains("not registered for polymorphic serialization") == true) {
-                throw UnexpectedValueError("unsupported polymorphic type specified for object", beginPos!!)
+            if (polymorphicDecoder != null && e.message?.contains("polymorphic") == true) {
+                val classNamePos = polymorphicDecoder?.classNamePos ?: beginPos!!
+                throw UnexpectedValueError("unknown class name specified", classNamePos)
             }
 
             throw e
@@ -45,14 +51,23 @@ internal class MainDecoder(
     }
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        check(beginPos == null)
         beginPos = parser.peek().pos
         return when (descriptor.kind) {
-            StructureKind.CLASS -> ClassDecoder(this)
+            StructureKind.CLASS -> if (polymorphicDecoder != null) {
+                ClassDecoder(this, setOf(polymorphicDecoder!!.classDiscriminator))
+            } else {
+                ClassDecoder(this)
+            }
+
             StructureKind.LIST -> ListDecoder(this)
             StructureKind.MAP -> MapDecoder(this)
             StructureKind.OBJECT -> ObjectDecoder(this)
-            is PolymorphicKind -> PolymorphicDecoder(descriptor, this)
+            is PolymorphicKind -> {
+                val decoder = PolymorphicDecoder(descriptor, this)
+                polymorphicDecoder = decoder
+                decoder
+            }
+
             else -> throw UnsupportedOperationException()
         }
     }

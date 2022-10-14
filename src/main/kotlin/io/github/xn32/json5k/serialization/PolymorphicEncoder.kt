@@ -49,7 +49,7 @@ private class TypeInjectingEncoder(
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
         generator.put(Token.MemberName(discriminatorName))
         generator.put(Token.Str(discriminatorValue))
-        return ClassEncoder(parent, noDelimiters = true)
+        return ClassEncoder(parent, noDelimiters = true, reservedKeys = setOf(discriminatorName))
     }
 
     override fun encodeBoolean(value: Boolean) = throw UnsupportedOperationException()

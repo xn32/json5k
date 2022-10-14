@@ -8,8 +8,11 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeDecoder
 
 @OptIn(ExperimentalSerializationApi::class)
-internal class ClassDecoder(parent: MainDecoder) : StructDecoder(parent, Token.BeginObject) {
-    private val specifiedKeys: MutableSet<String> = mutableSetOf()
+internal class ClassDecoder(
+    parent: MainDecoder,
+    invalidKeys: Set<String> = setOf()
+) : StructDecoder(parent, Token.BeginObject) {
+    private val specifiedKeys: MutableSet<String> = invalidKeys.toMutableSet()
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
         val (pos, token) = parser.peek()

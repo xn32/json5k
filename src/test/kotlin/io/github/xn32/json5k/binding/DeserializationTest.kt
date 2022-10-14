@@ -1,7 +1,6 @@
 package io.github.xn32.json5k.binding
 
 import io.github.xn32.json5k.CharError
-import io.github.xn32.json5k.DecodingError
 import io.github.xn32.json5k.DuplicateKeyError
 import io.github.xn32.json5k.Json5
 import io.github.xn32.json5k.MissingFieldError
@@ -15,7 +14,6 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
@@ -41,9 +39,13 @@ class DeserializationTest {
     fun `deserialization of unsigned numbers works`() {
         @Serializable
         data class UnsignedWrapper(val value: UByte)
+
         assertEquals(UnsignedWrapper(255u), decode("{ value: 255 }"))
-        val error = assertFails { decode<UnsignedWrapper>("{ value: -1 }") }
-        assertContains(error.message!!, "range [0..255]")
+        val error = assertFailsWith<UnexpectedValueError> {
+            decode<UnsignedWrapper>("{ value: -1 }")
+        }
+
+        assertContains(error.message, "range [0..255]")
     }
 
     @Test
@@ -69,6 +71,7 @@ class DeserializationTest {
     fun `duplicate key in top-level class are prohibited by default`() {
         @Serializable
         data class Class(val first: Int, val second: Long)
+
         assertFailsWith<DuplicateKeyError> {
             decode<Class>("{ first: 10, second: 20, first: 30 }")
         }
@@ -114,11 +117,11 @@ class DeserializationTest {
 
     @Test
     fun `implicit conversion to integers is prohibited`() {
-        assertFailsWith<DecodingError> {
+        assertFailsWith<UnexpectedValueError> {
             decode<Long>("10.0")
         }
 
-        assertFailsWith<DecodingError> {
+        assertFailsWith<UnexpectedValueError> {
             decode<Short>("1e2")
         }
     }
@@ -130,11 +133,11 @@ class DeserializationTest {
 
         assertEquals(SingletonWrapper(Singleton), decode("{ obj: {} }"))
 
-        assertFailsWith<DecodingError> {
+        assertFailsWith<UnexpectedValueError> {
             decode<SingletonWrapper>("{ obj: { unknown: 0 } }")
         }
 
-        assertFailsWith<DecodingError> {
+        assertFailsWith<MissingFieldError> {
             decode<SingletonWrapper>("{}")
         }
     }
@@ -142,7 +145,7 @@ class DeserializationTest {
     @Test
     fun `top-level polymorphic types are supported`() {
         assertEquals(
-            DefaultImpl(30), decode<DefaultInterface>("{ type: 'impl', integer: 30 }")
+            DefaultImpl(30), decode<DefaultInterface>("{ type: 'valid', integer: 30 }")
         )
     }
 
@@ -150,56 +153,62 @@ class DeserializationTest {
     fun `inner polymorphic types are supported`() {
         assertEquals(
             Wrapper<DefaultInterface>(DefaultImpl(10)),
-            decode("{ obj: { type: 'impl', integer: 10 } }")
+            decode("{ obj: { type: 'valid', integer: 10 } }")
         )
     }
 
     @Test
     fun `unknown class discriminator value is detected`() {
-        assertFailsWith<DecodingError> {
+        assertFailsWith<UnexpectedValueError> {
             decode<DefaultInterface>("{ type: 'unknown' }")
-        }.checkPosition(1, 1)
+        }.checkPosition(1, 9)
     }
 
     @Test
     fun `unknown object key is reported`() {
         @Serializable
         data class Entity(val x: Int)
-        assertFailsWith<DecodingError> {
+        assertFailsWith<UnknownKeyError> {
             decode<Entity>("{ abc: 10 }")
         }.checkPosition(1, 3)
     }
 
     @Test
     fun `repeated polymorphic discriminator is recognized as error`() {
-        assertFailsWith<DecodingError> {
-            decode<DefaultInterface>("{ type: 'impl', type: 'unknown' }")
-        }.checkPosition(1, 17)
+        assertFailsWith<DuplicateKeyError> {
+            decode<DefaultInterface>("{ type: 'valid', type: 'unknown' }")
+        }.checkPosition(1, 18)
     }
 
     @Test
     fun `custom class discriminator is supported`() {
         assertEquals(
             CustomImpl(null),
-            decode<CustomInterface>("{ category: 'impl', name: null }")
+            decode<CustomInterface>("{ category: 'main', name: null }")
         )
     }
 
     @Test
     fun `custom class discriminator overwrites default discriminator`() {
-        val format = Json5 { classDiscriminator = "xyz" }
+        val json5 = Json5 {
+            classDiscriminator = "xyz"
+        }
+
         assertEquals(
             CustomImpl(null),
-            format.decodeFromString<CustomInterface>("{ category: 'impl', name: null }")
+            json5.decodeFromString<CustomInterface>("{ category: 'main', name: null }")
         )
     }
 
     @Test
     fun `custom class discriminator is considered`() {
-        val format = Json5 { classDiscriminator = "kind" }
+        val json5 = Json5 {
+            classDiscriminator = "kind"
+        }
+
         assertEquals(
             DefaultImpl(43),
-            format.decodeFromString<DefaultInterface>("{ kind: 'impl', integer: 43 }")
+            json5.decodeFromString<DefaultInterface>("{ kind: 'valid', integer: 43 }")
         )
     }
 
@@ -235,6 +244,36 @@ class DeserializationTest {
         }
 
         assertEquals("a", err.key)
+        err.checkPosition(1, 1)
+    }
+
+    @Test
+    fun `missing field is associated with the correct hierarchy level`() {
+        @Serializable
+        data class Inner(val x: Int)
+        @Serializable
+        data class Outer(val inner: Inner, val y: Int)
+
+        val outerError = assertFailsWith<MissingFieldError> {
+            decode<Outer>("{ inner: { x: 10 } }")
+        }
+
+        assertEquals("y", outerError.key)
+        outerError.checkPosition(1, 1)
+
+        val innerError = assertFailsWith<MissingFieldError> {
+            decode<Outer>("{ inner: {}, y: 4 }")
+        }
+
+        assertEquals("x", innerError.key)
+        innerError.checkPosition(1, 10)
+    }
+
+    @Test
+    fun `missing field in polymorphic class is detected`() {
+        assertFailsWith<MissingFieldError> {
+            decode<DefaultInterface>("{ type: 'valid' }")
+        }.checkPosition(1, 1)
     }
 
     @Test

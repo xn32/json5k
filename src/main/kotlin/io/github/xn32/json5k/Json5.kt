@@ -7,7 +7,7 @@ import io.github.xn32.json5k.deserialization.MainDecoder
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.generation.FormatGenerator
 import io.github.xn32.json5k.parsing.FormatParser
-import io.github.xn32.json5k.parsing.PlainLookaheadParser
+import io.github.xn32.json5k.parsing.InjectableLookaheadParser
 import io.github.xn32.json5k.serialization.MainEncoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -56,7 +56,7 @@ private class Json5Impl(
     val settings: Settings,
 ) : Json5 {
     override fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, inputStream: InputStream): T {
-        val parser = PlainLookaheadParser(FormatParser(inputStream))
+        val parser = InjectableLookaheadParser(FormatParser(inputStream))
         val res = MainDecoder(serializersModule, parser, settings).decodeSerializableValue(deserializer)
 
         while (true) {

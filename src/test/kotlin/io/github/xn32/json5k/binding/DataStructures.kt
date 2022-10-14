@@ -14,13 +14,17 @@ internal data class Wrapper<T>(val obj: T)
 internal sealed interface DefaultInterface
 
 @Serializable
-@SerialName("impl")
+@SerialName("valid")
 internal data class DefaultImpl(val integer: Int) : DefaultInterface
+
+@Serializable
+@SerialName("invalid")
+internal data class InvalidDefaultImpl(val type: String) : DefaultInterface
 
 @Serializable
 @ClassDiscriminator("category")
 internal sealed interface CustomInterface
 
 @Serializable
-@SerialName("impl")
+@SerialName("main")
 internal data class CustomImpl(val name: String?) : CustomInterface

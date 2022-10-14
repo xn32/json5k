@@ -3,7 +3,7 @@ package io.github.xn32.json5k.deserialization
 import io.github.xn32.json5k.UnexpectedValueError
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.parsing.Event
-import io.github.xn32.json5k.parsing.LookaheadParser
+import io.github.xn32.json5k.parsing.InjectableLookaheadParser
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -14,11 +14,11 @@ import kotlinx.serialization.modules.SerializersModule
 @OptIn(ExperimentalSerializationApi::class)
 internal sealed class StructDecoder(protected val parent: MainDecoder, opener: Token) : CompositeDecoder {
     override val serializersModule: SerializersModule = parent.serializersModule
-    protected val parser: LookaheadParser<Token> = parent.parser
+    protected val parser: InjectableLookaheadParser<Token> = parent.parser
     protected val beginEvent: Event<Token>
 
     init {
-        val event = parser.next()
+        val event = parent.parser.next()
         val (pos, token) = event
         if (token != opener) {
             throw UnexpectedValueError("unexpected structure", pos)

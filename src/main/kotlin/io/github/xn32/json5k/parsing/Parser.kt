@@ -13,33 +13,12 @@ internal data class Event<out T>(
     val item: T,
 )
 
-internal class PlainLookaheadParser<out T>(private val parser: Parser<T>) : LookaheadParser<T> {
-    private var next: Event<T>? = null
+internal class InjectableLookaheadParser<T>(private val parser: Parser<T>) : LookaheadParser<T> {
+    private val buffer: MutableList<Event<T>> = mutableListOf()
 
-    private fun clearing(): Event<T>? = next.also { next = null }
-    private fun setting(event: Event<T>): Event<T> = event.also { next = it }
+    fun inject(event: Event<T>) = buffer.add(0, event)
+    fun inject(events: List<Event<T>>) = buffer.addAll(0, events)
 
-    override fun next(): Event<T> = clearing() ?: parser.next()
-    override fun peek(): Event<T> = next ?: setting(parser.next())
-}
-
-internal class InjectableLookaheadParser<T>(parser: Parser<T>) : LookaheadParser<T> {
-    private val eventBuffer: ArrayDeque<Event<T>> = ArrayDeque()
-    private val delegate: LookaheadParser<T> = PlainLookaheadParser(parser)
-
-    fun inject(event: Event<T>) {
-        eventBuffer.add(event)
-    }
-
-    override fun peek(): Event<T> = if (eventBuffer.isNotEmpty()) {
-        eventBuffer.first()
-    } else {
-        delegate.peek()
-    }
-
-    override fun next(): Event<T> = if (eventBuffer.isNotEmpty()) {
-        eventBuffer.removeFirst()
-    } else {
-        delegate.next()
-    }
+    override fun next(): Event<T> = buffer.removeFirstOrNull() ?: parser.next()
+    override fun peek(): Event<T> = buffer.firstOrNull() ?: parser.next().also { buffer.add(it) }
 }
