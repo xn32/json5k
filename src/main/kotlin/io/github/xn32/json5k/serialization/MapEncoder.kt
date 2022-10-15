@@ -2,7 +2,7 @@ package io.github.xn32.json5k.serialization
 
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.generation.FormatGenerator
-import io.github.xn32.json5k.unsupportedKeyType
+import io.github.xn32.json5k.throwKeyTypeException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.CompositeEncoder
@@ -32,22 +32,22 @@ private class KeyEncoder(parent: MainEncoder) : Encoder {
     override val serializersModule: SerializersModule = parent.serializersModule
     private val generator: FormatGenerator = parent.generator
 
-    override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder = unsupportedKeyType()
-    override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) = unsupportedKeyType()
+    override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder = throwKeyTypeException()
+    override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) = throwKeyTypeException()
 
-    override fun encodeBoolean(value: Boolean) = unsupportedKeyType()
-    override fun encodeByte(value: Byte) = unsupportedKeyType()
-    override fun encodeShort(value: Short) = unsupportedKeyType()
-    override fun encodeInt(value: Int) = unsupportedKeyType()
-    override fun encodeLong(value: Long) = unsupportedKeyType()
+    override fun encodeBoolean(value: Boolean) = throwKeyTypeException()
+    override fun encodeByte(value: Byte) = throwKeyTypeException()
+    override fun encodeShort(value: Short) = throwKeyTypeException()
+    override fun encodeInt(value: Int) = throwKeyTypeException()
+    override fun encodeLong(value: Long) = throwKeyTypeException()
 
-    override fun encodeChar(value: Char) = unsupportedKeyType()
+    override fun encodeChar(value: Char) = throwKeyTypeException()
 
-    override fun encodeFloat(value: Float) = unsupportedKeyType()
-    override fun encodeDouble(value: Double) = unsupportedKeyType()
+    override fun encodeFloat(value: Float) = throwKeyTypeException()
+    override fun encodeDouble(value: Double) = throwKeyTypeException()
 
     @ExperimentalSerializationApi
-    override fun encodeNull(): Nothing = unsupportedKeyType()
+    override fun encodeNull(): Nothing = throwKeyTypeException()
 
     override fun encodeInline(descriptor: SerialDescriptor): Encoder = this
 

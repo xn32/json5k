@@ -1,8 +1,5 @@
 package io.github.xn32.json5k
 
-import io.github.xn32.json5k.config.ConfigBuilder
-import io.github.xn32.json5k.config.Settings
-import io.github.xn32.json5k.config.toSettings
 import io.github.xn32.json5k.deserialization.MainDecoder
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.generation.FormatGenerator

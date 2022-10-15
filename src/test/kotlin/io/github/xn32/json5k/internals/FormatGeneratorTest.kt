@@ -1,6 +1,6 @@
 package io.github.xn32.json5k.internals
 
-import io.github.xn32.json5k.config.OutputStrategy
+import io.github.xn32.json5k.OutputStrategy
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.generation.FormatGenerator
 import java.io.ByteArrayOutputStream

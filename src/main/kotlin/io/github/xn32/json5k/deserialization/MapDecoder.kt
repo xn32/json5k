@@ -3,7 +3,7 @@ package io.github.xn32.json5k.deserialization
 import io.github.xn32.json5k.DuplicateKeyError
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.parsing.LookaheadParser
-import io.github.xn32.json5k.unsupportedKeyType
+import io.github.xn32.json5k.throwKeyTypeException
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -45,26 +45,26 @@ private class KeyDecoder(parent: MainDecoder) : Decoder {
     private val specifiedKeys: MutableSet<String> = mutableSetOf()
     private val parser: LookaheadParser<Token> = parent.parser
 
-    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder = unsupportedKeyType()
-    override fun decodeEnum(enumDescriptor: SerialDescriptor): Int = unsupportedKeyType()
+    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder = throwKeyTypeException()
+    override fun decodeEnum(enumDescriptor: SerialDescriptor): Int = throwKeyTypeException()
 
-    override fun decodeBoolean(): Boolean = unsupportedKeyType()
+    override fun decodeBoolean(): Boolean = throwKeyTypeException()
 
-    override fun decodeByte(): Byte = unsupportedKeyType()
-    override fun decodeShort(): Short = unsupportedKeyType()
-    override fun decodeInt(): Int = unsupportedKeyType()
-    override fun decodeLong(): Long = unsupportedKeyType()
+    override fun decodeByte(): Byte = throwKeyTypeException()
+    override fun decodeShort(): Short = throwKeyTypeException()
+    override fun decodeInt(): Int = throwKeyTypeException()
+    override fun decodeLong(): Long = throwKeyTypeException()
 
-    override fun decodeChar(): Char = unsupportedKeyType()
+    override fun decodeChar(): Char = throwKeyTypeException()
 
-    override fun decodeFloat(): Float = unsupportedKeyType()
-    override fun decodeDouble(): Double = unsupportedKeyType()
-
-    @ExperimentalSerializationApi
-    override fun decodeNotNullMark(): Boolean = unsupportedKeyType()
+    override fun decodeFloat(): Float = throwKeyTypeException()
+    override fun decodeDouble(): Double = throwKeyTypeException()
 
     @ExperimentalSerializationApi
-    override fun decodeNull(): Nothing = unsupportedKeyType()
+    override fun decodeNotNullMark(): Boolean = throwKeyTypeException()
+
+    @ExperimentalSerializationApi
+    override fun decodeNull(): Nothing = throwKeyTypeException()
 
     override fun decodeInline(descriptor: SerialDescriptor): Decoder = this
 

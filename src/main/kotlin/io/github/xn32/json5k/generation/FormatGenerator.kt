@@ -1,6 +1,6 @@
 package io.github.xn32.json5k.generation
 
-import io.github.xn32.json5k.config.OutputStrategy
+import io.github.xn32.json5k.OutputStrategy
 import io.github.xn32.json5k.format.DocumentTracker
 import io.github.xn32.json5k.format.DocumentTracker.TokenType
 import io.github.xn32.json5k.format.Specification

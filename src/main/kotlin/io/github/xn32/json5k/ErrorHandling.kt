@@ -58,6 +58,6 @@ internal fun InputReader.throwTokenError(): Nothing = throw if (done) {
     CharError(peek(), pos)
 }
 
-internal fun unsupportedKeyType(): Nothing {
+internal fun throwKeyTypeException(): Nothing {
     throw UnsupportedOperationException("map key must be a non-nullable string")
 }

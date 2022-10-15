@@ -1,8 +1,8 @@
 package io.github.xn32.json5k.deserialization
 
 import io.github.xn32.json5k.MissingFieldError
+import io.github.xn32.json5k.Settings
 import io.github.xn32.json5k.UnexpectedValueError
-import io.github.xn32.json5k.config.Settings
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.isUnsignedNumber
 import io.github.xn32.json5k.parsing.InjectableLookaheadParser
