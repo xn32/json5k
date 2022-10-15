@@ -5,16 +5,13 @@ import io.github.xn32.json5k.parsing.InputReader
 import io.github.xn32.json5k.parsing.ReaderPosition
 import kotlinx.serialization.SerializationException
 
-interface PositionProvider {
-    val line: UInt
-    val column: UInt
+sealed class InputError constructor(msg: String, pos: ReaderPosition) : Exception() {
+    override val message: String = "$msg at position $pos"
+    val line: UInt = pos.line
+    val column: UInt = pos.column
 }
 
-sealed class ParsingError constructor(msg: String, pos: ReaderPosition) : Exception(), PositionProvider {
-    override val message: String = "$msg at position $pos"
-    override val line: UInt = pos.line
-    override val column: UInt = pos.column
-}
+sealed class ParsingError constructor(msg: String, pos: ReaderPosition) : InputError(msg, pos)
 
 class LiteralError internal constructor(val literal: String, pos: ReaderPosition) :
     ParsingError("unexpected literal '$literal'", pos)
@@ -28,11 +25,7 @@ class EndOfFileError internal constructor(pos: ReaderPosition) :
 class OverflowError internal constructor(pos: ReaderPosition) :
     ParsingError("integer exceeds internal value range", pos)
 
-sealed class DecodingError constructor(msg: String, pos: ReaderPosition) : SerializationException(), PositionProvider {
-    override val message: String = "$msg at position $pos"
-    override val line: UInt = pos.line
-    override val column: UInt = pos.column
-}
+sealed class DecodingError constructor(msg: String, pos: ReaderPosition) : InputError(msg, pos)
 
 class MissingFieldError internal constructor(val key: String, pos: ReaderPosition) :
     DecodingError("missing field '$key' in object", pos)
