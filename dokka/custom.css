@@ -1,0 +1,9 @@
+@media print, screen and (min-width: 960px) {
+    .tabs-section-body .keyValue {
+        grid-template-columns: 175px auto;
+    }
+
+    .content .keyValue {
+        grid-template-columns: 275px auto;
+    }
+}
