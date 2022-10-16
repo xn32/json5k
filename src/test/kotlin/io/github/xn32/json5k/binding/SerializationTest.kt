@@ -193,7 +193,7 @@ class SerializationTest {
         val stream = ByteArrayOutputStream()
         val str = stream.use {
             Json5.encodeToStream(20, it)
-            it.toString(Charsets.UTF_8)
+            it.toString("UTF-8")
         }
 
         assertEquals("20", str)

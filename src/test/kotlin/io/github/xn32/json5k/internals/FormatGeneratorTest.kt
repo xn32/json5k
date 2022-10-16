@@ -356,5 +356,5 @@ private fun generate(strategy: OutputStrategy, block: FormatGenerator.() -> Unit
     val writer = FormatGenerator(it, strategy)
     writer.apply(block)
     writer.put(Token.EndOfFile)
-    it.toString(Charsets.UTF_8)
+    it.toString("UTF-8")
 }
