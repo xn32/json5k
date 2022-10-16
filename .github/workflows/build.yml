@@ -1,4 +1,4 @@
-name: Build
+name: Build library
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       - name: java-env
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '11'
           distribution: 'adopt'
       - name: wrapper-validation
         uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
