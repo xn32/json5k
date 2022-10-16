@@ -17,6 +17,10 @@ Unit tests for the most important application scenarios exist, but the framework
 
 Bug reports and other feedback are highly welcome, for example via the [issue tracker](https://github.com/xn32/json5k/issues) on GitHub.
 
+## API documentation
+
+The latest HTML version of the API documentation can be found [here](https://xn32.github.io/json5k/api).
+
 ## Setup instructions
 
 This repository contains a Gradle setup that compiles the library into a JAR file. Use this file according to your needs.
