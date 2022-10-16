@@ -33,6 +33,7 @@ class DeserializationTest {
         assertEquals(Double.NEGATIVE_INFINITY, decode("-Infinity"))
         assertEquals(Double.NaN, decode("NaN"))
         assertEquals("abc", decode("'abc'"))
+        assertEquals("\ud834\udd1e", decode("'\ud834\udd1e'"))
     }
 
     @Test

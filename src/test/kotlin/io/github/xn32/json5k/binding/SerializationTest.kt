@@ -25,6 +25,7 @@ class SerializationTest {
         assertEquals("-Infinity", encode(Double.NEGATIVE_INFINITY))
         assertEquals("NaN", encode(Double.NaN))
         assertEquals("\"abc\"", encode("abc"))
+        assertEquals("\"\ud834\udd1e\"", encode("\ud834\udd1e"))
     }
 
     @Test

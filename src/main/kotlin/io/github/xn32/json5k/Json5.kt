@@ -200,7 +200,7 @@ private class Json5Impl(
     override fun <T> encodeToString(serializer: SerializationStrategy<T>, value: T): String {
         val stream = ByteArrayOutputStream()
         encodeToStream(serializer, value, stream)
-        return stream.toString()
+        return stream.toString("UTF-8")
     }
 }
 
