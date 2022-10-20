@@ -1,9 +1,9 @@
-name: Publish docs
+name: Dokka
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: read
