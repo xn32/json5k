@@ -58,7 +58,7 @@ tasks.withType<DokkaTask>() {
                 val gradleVersion = version.toString()
 
                 val gitVersion = if (!gradleVersion.contains("SNAPSHOT")) {
-                    gradleVersion
+                    "v$gradleVersion"
                 } else {
                     "main"
                 }
