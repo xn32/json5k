@@ -24,16 +24,39 @@ class DeserializationTest {
     fun `top-level value is decoded`() {
         assertEquals(40, decode("40"))
         assertEquals(-33, decode("-33"))
+        assertEquals(-2000000000, decode("-2000000000"))
+        assertEquals(3000000000u, decode("3000000000"))
         assertEquals(13.25f, decode("13.25"))
         assertEquals(11.0, decode("11.0"))
         assertEquals(true, decode("true"))
-        assertEquals(null, decode<Int?>("null"))
         assertEquals(Double.POSITIVE_INFINITY, decode("Infinity"))
         assertEquals(Double.POSITIVE_INFINITY, decode("+Infinity"))
         assertEquals(Double.NEGATIVE_INFINITY, decode("-Infinity"))
         assertEquals(Double.NaN, decode("NaN"))
         assertEquals("abc", decode("'abc'"))
         assertEquals("\ud834\udd1e", decode("'\ud834\udd1e'"))
+    }
+
+    @Test
+    fun `nullable top-level value is decoded`() {
+        assertEquals(50, decode<Int?>("50"))
+        assertEquals(null, decode<Int?>("null"))
+        assertEquals(50u, decode<UInt?>("50"))
+        assertEquals(null, decode<UInt?>("null"))
+    }
+
+    @Test
+    fun `list is decoded`() {
+        assertContentEquals(listOf(3, 6, 7), decode<List<Int>>("[3,6,7]"))
+    }
+
+    @Test
+    fun `primitive array is decoded`() {
+        assertContentEquals(intArrayOf(-4, 5, 2000000000), decode("[-4,5,2000000000]"))
+        assertContentEquals(longArrayOf(-10, 3000000000), decode("[-10,3000000000]"))
+
+        @OptIn(ExperimentalUnsignedTypes::class)
+        assertContentEquals(uintArrayOf(10u, 3000000000u), decode("[10, 3000000000]"))
     }
 
     @Test
@@ -78,18 +101,6 @@ class DeserializationTest {
 
         assertContains(error.message, "array expected at position")
         error.checkPosition(1, 1)
-    }
-
-    @Test
-    fun `nullable top-level value is decoded`() {
-        assertEquals(50, decode<Int?>("50"))
-        assertEquals(null, decode<Int?>("null"))
-    }
-
-    @Test
-    fun `primitive array is decoded`() {
-        assertContentEquals(intArrayOf(4, 5, 6), decode("[4,5,6]"))
-        assertContentEquals(longArrayOf(-10, 20), decode("[-10, 20]"))
     }
 
     @Test

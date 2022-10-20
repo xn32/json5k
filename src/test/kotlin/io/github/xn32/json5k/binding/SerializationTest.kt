@@ -17,10 +17,11 @@ class SerializationTest {
     fun `top-level value is encoded`() {
         assertEquals("40", encode(40))
         assertEquals("-33", encode(-33))
+        assertEquals("-2000000000", encode(-2000000000))
+        assertEquals("3000000000", encode(3000000000u))
         assertEquals("13.25", encode(13.25f))
         assertEquals("11.0", encode(11.0))
         assertEquals("true", encode(true))
-        assertEquals("null", encode<Int?>(null))
         assertEquals("Infinity", encode(Double.POSITIVE_INFINITY))
         assertEquals("-Infinity", encode(Double.NEGATIVE_INFINITY))
         assertEquals("NaN", encode(Double.NaN))
@@ -30,17 +31,28 @@ class SerializationTest {
 
     @Test
     fun `nullable top-level value is encoded`() {
+        assertEquals("50", encode<Int?>(50))
         assertEquals("null", encode<Int?>(null))
-        assertEquals("55", encode<Int?>(55))
+        assertEquals("50", encode<UInt?>(50u))
+        assertEquals("null", encode<UInt?>(null))
     }
 
     @Test
-    fun `list is encoded correctly`() {
+    fun `list is encoded`() {
         assertEquals("[3,6,7]", encode(listOf(3, 6, 7)))
     }
 
     @Test
-    fun `class without default values is encoded correctly`() {
+    fun `primitive array is encoded`() {
+        assertEquals("[-4,6,2000000000]", encode(intArrayOf(-4, 6, 2000000000)))
+        assertEquals("[-4,6,3000000000]", encode(longArrayOf(-4, 6, 3000000000)))
+
+        @OptIn(ExperimentalUnsignedTypes::class)
+        assertEquals("[4,6,3000000000]", encode(uintArrayOf(4u, 6u, 3000000000u)))
+    }
+
+    @Test
+    fun `class without default values is encoded`() {
         @Serializable
         data class Dummy(val a: Int, val b: Int?)
 
@@ -52,7 +64,7 @@ class SerializationTest {
         @Serializable
         data class Dummy(val a: Short, val b: Short = 40)
 
-        assertEquals("{a:11}", encode(Dummy(11)))
+        assertEquals("{a:11}", encode(Dummy(11, 40)))
     }
 
     @Test
