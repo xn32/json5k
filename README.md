@@ -1,8 +1,9 @@
 # json5k
 
-[![Build](https://github.com/xn32/json5k/actions/workflows/build.yml/badge.svg)](https://github.com/xn32/json5k/actions/workflows/build.yml)
+[![Build status](https://github.com/xn32/json5k/actions/workflows/build.yml/badge.svg)](https://github.com/xn32/json5k/actions/workflows/build.yml)
+[![API documentation](https://img.shields.io/badge/-Documentation-informational)](https://xn32.github.io/json5k/api/)
 
-This is an experimental [JSON5](https://json5.org/) library for the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) framework.
+This is a [JSON5](https://json5.org/) library for the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) framework.
 Targeting the JVM, it serializes Kotlin object hierarchies into standard-compliant JSON5 output and vice versa.
 
 ## Key features
@@ -17,23 +18,18 @@ Unit tests for the most important application scenarios exist, but the framework
 
 Bug reports and other feedback are highly welcome, for example via the [issue tracker](https://github.com/xn32/json5k/issues) on GitHub.
 
-## API documentation
-
-The latest HTML version of the API documentation can be found [here](https://xn32.github.io/json5k/api).
-
 ## Setup instructions
 
 This repository contains a Gradle setup that compiles the library into a JAR file. Use this file according to your needs.
 
 ### Recommended versions
 
-json5k was tested against the following [Kotlin compiler](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm),
-[serialization plugin](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.serialization),
-and [serialization runtime](https://search.maven.org/artifact/org.jetbrains.kotlinx/kotlinx-serialization-core/) versions:
+json5k was tested against the following dependencies:
 
-| json5k | Kotlin compiler | Serialization plugin | Serialization runtime |
-|--------|-----------------|----------------------|-----------------------|
-| v0.1.0 | v1.7.10         | v1.7.10              | v1.4.0                |
+| json5k | Kotlin plugins | Serialization runtime |
+|--------|----------------|-----------------------|
+| v0.2.0 | v1.7.20        | v1.4.1                |
+| v0.1.0 | v1.7.10        | v1.4.0                |
 
 ### Usage from Gradle
 
@@ -45,8 +41,8 @@ For evaluation purposes, the easiest solution might be to install the library to
 Afterwards, use it from `build.gradle.kts` as follows:
 ```kotlin
 plugins {
-    kotlin("jvm") version "1.7.10"
-    kotlin("plugin.serialization") version "1.7.10"
+    kotlin("jvm") version "1.7.20"
+    kotlin("plugin.serialization") version "1.7.20"
 }
 
 repositories {
@@ -58,7 +54,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.xn32:json5k:0.2.0-SNAPSHOT")
+    implementation("io.github.xn32:json5k:0.2.0")
 }
 ```
 
