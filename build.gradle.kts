@@ -44,13 +44,15 @@ tasks.withType<GenerateModuleMetadata> {
 
 tasks.withType<DokkaTask>() {
     val githubRepo = "https://github.com/xn32/json5k"
-    val footerMsg = "Find the <a href='$githubRepo'>json5k repository</a> on GitHub."
+    val footerMsg = "<a href='$githubRepo'>json5k on GitHub</a>"
 
     dokkaSourceSets {
         configureEach {
             externalDocumentationLink {
                 url.set(URL("https://kotlinlang.org/api/kotlinx.serialization/"))
             }
+
+            includes.from("dokka/index.md")
 
             sourceLink {
                 val gradleVersion = version.toString()
