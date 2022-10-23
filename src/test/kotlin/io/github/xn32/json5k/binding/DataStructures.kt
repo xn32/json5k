@@ -12,16 +12,16 @@ internal value class StringWrapper(val str: String)
 internal enum class DummyEnum { ITEM }
 
 @Serializable
-internal class UnsignedContainer(val byte: UByte, val short: UShort, val int: UInt, val long: ULong)
+internal data class UnsignedContainer(val byte: UByte, val short: UShort, val int: UInt, val long: ULong)
 
 @Serializable
-internal class SignedContainer(val byte: Byte, val short: Short, val int: Int, val long: Long)
+internal data class SignedContainer(val byte: Byte, val short: Short, val int: Int, val long: Long)
 
 @Serializable
-internal class FloatingPointContainer(val float: Float, val double: Double)
+internal data class FloatingPointContainer(val float: Float, val double: Double)
 
 @Serializable
-internal class MiscContainer(val char: Char, val str: String, val bool: Boolean, val enum: DummyEnum)
+internal data class MiscContainer(val char: Char, val str: String, val bool: Boolean, val enum: DummyEnum)
 
 @Serializable
 internal object Singleton
@@ -33,8 +33,12 @@ internal data class Wrapper<T>(val obj: T)
 internal sealed interface DefaultInterface
 
 @Serializable
-@SerialName("valid")
-internal data class DefaultImpl(val integer: Int) : DefaultInterface
+@SerialName("flat")
+internal data class FlatDefaultImpl(val integer: Int) : DefaultInterface
+
+@Serializable
+@SerialName("nested")
+internal data class NestedDefaultImpl(val inner: Wrapper<Int>) : DefaultInterface
 
 @Serializable
 @SerialName("invalid")
