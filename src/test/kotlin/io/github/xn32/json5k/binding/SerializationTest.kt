@@ -14,23 +14,62 @@ private inline fun <reified T> encode(input: T): String = Json5.encodeToString(i
 
 class SerializationTest {
     @Test
-    fun `top-level value is encoded`() {
-        assertEquals("40", encode(40))
-        assertEquals("-33", encode(-33))
-        assertEquals("-2000000000", encode(-2000000000))
-        assertEquals("3000000000", encode(3000000000u))
+    fun `signed value is encoded`() {
+        assertEquals("127", encode(Byte.MAX_VALUE))
+        assertEquals("-128", encode(Byte.MIN_VALUE))
+        assertEquals("32767", encode(Short.MAX_VALUE))
+        assertEquals("-32768", encode(Short.MIN_VALUE))
+        assertEquals("2147483647", encode(Int.MAX_VALUE))
+        assertEquals("-2147483648", encode(Int.MIN_VALUE))
+        assertEquals("9223372036854775807", encode(Long.MAX_VALUE))
+        assertEquals("-9223372036854775808", encode(Long.MIN_VALUE))
+    }
+
+    @Test
+    fun `unsigned value is encoded`() {
+        assertEquals("255", encode(UByte.MAX_VALUE))
+        assertEquals("65535", encode(UShort.MAX_VALUE))
+        assertEquals("4294967295", encode(UInt.MAX_VALUE))
+        assertEquals("18446744073709551615", encode(ULong.MAX_VALUE))
+    }
+
+    @Test
+    fun `floating-point value is encoded`() {
         assertEquals("13.25", encode(13.25f))
         assertEquals("11.0", encode(11.0))
-        assertEquals("true", encode(true))
         assertEquals("Infinity", encode(Double.POSITIVE_INFINITY))
+        assertEquals("Infinity", encode(Float.POSITIVE_INFINITY))
         assertEquals("-Infinity", encode(Double.NEGATIVE_INFINITY))
+        assertEquals("-Infinity", encode(Float.NEGATIVE_INFINITY))
         assertEquals("NaN", encode(Double.NaN))
+        assertEquals("NaN", encode(Float.NaN))
+    }
+
+    @Test
+    fun `boolean value is encoded`() {
+        assertEquals("true", encode(true))
+        assertEquals("false", encode(false))
+    }
+
+    @Test
+    fun `enum value is encoded`() {
+        assertEquals("\"ITEM\"", encode(DummyEnum.ITEM))
+    }
+
+    @Test
+    fun `value class is encoded`() {
+        assertEquals("\"wrapped\"", encode(StringWrapper("wrapped")))
+    }
+
+    @Test
+    fun `string is encoded`() {
+        assertEquals("\"x\"", encode('x'))
         assertEquals("\"abc\"", encode("abc"))
         assertEquals("\"\ud834\udd1e\"", encode("\ud834\udd1e"))
     }
 
     @Test
-    fun `nullable top-level value is encoded`() {
+    fun `nullable value is encoded`() {
         assertEquals("50", encode<Int?>(50))
         assertEquals("null", encode<Int?>(null))
         assertEquals("50", encode<UInt?>(50u))
@@ -38,25 +77,50 @@ class SerializationTest {
     }
 
     @Test
-    fun `list is encoded`() {
+    fun `list of integers is encoded`() {
         assertEquals("[3,6,7]", encode(listOf(3, 6, 7)))
     }
 
     @Test
     fun `primitive array is encoded`() {
-        assertEquals("[-4,6,2000000000]", encode(intArrayOf(-4, 6, 2000000000)))
-        assertEquals("[-4,6,3000000000]", encode(longArrayOf(-4, 6, 3000000000)))
+        assertEquals(
+            "[-2147483648,2147483647]",
+            encode(intArrayOf(Int.MIN_VALUE, Int.MAX_VALUE))
+        )
+
+        assertEquals(
+            "[-9223372036854775808,9223372036854775807]",
+            encode(longArrayOf(Long.MIN_VALUE, Long.MAX_VALUE))
+        )
 
         @OptIn(ExperimentalUnsignedTypes::class)
-        assertEquals("[4,6,3000000000]", encode(uintArrayOf(4u, 6u, 3000000000u)))
+        assertEquals(
+            "[0,4294967295]",
+            encode(uintArrayOf(0u, UInt.MAX_VALUE))
+        )
     }
 
     @Test
-    fun `class without default values is encoded`() {
-        @Serializable
-        data class Dummy(val a: Int, val b: Int?)
+    fun `value containers are encoded`() {
+        assertEquals(
+            "{byte:127,short:32767,int:2147483647,long:9223372036854775807}",
+            encode(SignedContainer(Byte.MAX_VALUE, Short.MAX_VALUE, Int.MAX_VALUE, Long.MAX_VALUE))
+        )
 
-        assertEquals("{a:10,b:null}", encode(Dummy(10, null)))
+        assertEquals(
+            "{byte:255,short:65535,int:4294967295,long:18446744073709551615}",
+            encode(UnsignedContainer(UByte.MAX_VALUE, UShort.MAX_VALUE, UInt.MAX_VALUE, ULong.MAX_VALUE))
+        )
+
+        assertEquals(
+            "{float:0.0,double:Infinity}",
+            encode(FloatingPointContainer(.0f, Double.POSITIVE_INFINITY))
+        )
+
+        assertEquals(
+            "{char:\"x\",str:\"xyz\",bool:true,enum:\"ITEM\"}",
+            encode(MiscContainer('x', "xyz", true, DummyEnum.ITEM))
+        )
     }
 
     @Test
@@ -80,43 +144,47 @@ class SerializationTest {
     }
 
     @Test
-    fun `serialization of unsigned integers is supported`() {
-        @Serializable
-        data class UnsignedWrapper(val value: UByte)
-
-        assertEquals("{value:255}", encode(UnsignedWrapper(255u)))
-    }
-
-    @Test
     fun `nested class-list structures are encoded`() {
         @Serializable
         data class Container(val id: Int, val parts: List<Container>?)
 
         assertEquals(
-            "[{id:1,parts:[{id:3,parts:null}]}]", encode(listOf(Container(1, listOf(Container(3, null)))))
+            "[{id:1,parts:[{id:3,parts:null}]}]",
+            encode(listOf(Container(1, listOf(Container(3, null)))))
         )
     }
 
     @Test
-    fun `map is encoded correctly`() {
-        assertEquals(
-            "{a:10,b:20,c:null,null:0}", encode(mapOf("a" to 10, "b" to 20, "c" to null, "null" to 0))
-        )
+    fun `map with string keys is encoded`() {
+        assertEquals("{a:10,b:20,null:0}", encode(mapOf("a" to 10, "b" to 20, "null" to 0)))
     }
 
     @Test
-    fun `unsupported key type causes error`() {
-        assertFailsWith<UnsupportedOperationException> {
-            encode(mapOf('a' to 2))
-        }
-
-        assertFailsWith<UnsupportedOperationException> {
-            encode(mapOf(10 to 0))
-        }
+    fun `wrapped string is valid map key`() {
+        assertEquals("{a:10}", encode(mapOf(StringWrapper("a") to 10)))
     }
 
     @Test
-    fun `collisions with polymorphic discriminator values are detected`() {
+    fun `unsupported map key type causes error`() {
+        fun assertUnsupported(block: () -> Unit) {
+            assertFailsWith<UnsupportedOperationException>(block = block)
+        }
+
+        assertUnsupported { encode(mapOf(DummyEnum.ITEM to 0)) }
+        assertUnsupported { encode(mapOf(Wrapper(10) to 0)) }
+        assertUnsupported { encode(mapOf<Int?, Int>(null to 0)) }
+        assertUnsupported { encode(mapOf(0.toChar() to 0)) }
+        assertUnsupported { encode(mapOf(0.toByte() to 0)) }
+        assertUnsupported { encode(mapOf(0.toShort() to 0)) }
+        assertUnsupported { encode(mapOf(0 to 0)) }
+        assertUnsupported { encode(mapOf(0L to 0)) }
+        assertUnsupported { encode(mapOf(.0f to 0)) }
+        assertUnsupported { encode(mapOf(.0 to 0)) }
+        assertUnsupported { encode(mapOf(true to 0)) }
+    }
+
+    @Test
+    fun `collision with polymorphic discriminator value is detected`() {
         assertFailsWith<UnsupportedOperationException> {
             encode(Wrapper<DefaultInterface>(InvalidDefaultImpl("abc")))
         }
@@ -125,14 +193,16 @@ class SerializationTest {
     @Test
     fun `polymorphic type is serialized correctly`() {
         assertEquals(
-            "{obj:{type:\"valid\",integer:42}}", encode(Wrapper<DefaultInterface>(DefaultImpl(42)))
+            "{obj:{type:\"valid\",integer:42}}",
+            encode(Wrapper<DefaultInterface>(DefaultImpl(42)))
         )
     }
 
     @Test
     fun `customized polymorphic type is serialized correctly`() {
         assertEquals(
-            "{obj:{category:\"main\",name:null}}", encode(Wrapper<CustomInterface>(CustomImpl(null)))
+            "{obj:{category:\"main\",name:null}}",
+            encode(Wrapper<CustomInterface>(CustomImpl(null)))
         )
     }
 
@@ -141,7 +211,8 @@ class SerializationTest {
         val json5 = Json5 { classDiscriminator = "kind" }
 
         assertEquals(
-            "{kind:\"valid\",integer:50}", json5.encodeToString<DefaultInterface>(DefaultImpl(50))
+            "{kind:\"valid\",integer:50}",
+            json5.encodeToString<DefaultInterface>(DefaultImpl(50))
         )
     }
 
@@ -152,7 +223,8 @@ class SerializationTest {
         }
 
         assertEquals(
-            "{category:\"main\",name:\"abc\"}", json5.encodeToString<CustomInterface>(CustomImpl("abc"))
+            "{category:\"main\",name:\"abc\"}",
+            json5.encodeToString<CustomInterface>(CustomImpl("abc"))
         )
     }
 
