@@ -305,7 +305,7 @@ class DeserializationTest {
     @Test
     fun `flat polymorphic class is decoded`() {
         assertEquals(
-            FlatDefaultImpl(30), decode<DefaultInterface>("{ type: 'flat', integer: 30 }")
+            FlatDefaultImpl(10, 20), decode<DefaultInterface>("{ a: 10, type: 'flat', b: 20 }")
         )
     }
 
@@ -320,7 +320,7 @@ class DeserializationTest {
     fun `inner polymorphic class is decoded`() {
         assertEquals(
             Wrapper<DefaultInterface>(FlatDefaultImpl(10)),
-            decode("{ obj: { type: 'flat', integer: 10 } }")
+            decode("{ obj: { type: 'flat', a: 10 } }")
         )
     }
 
@@ -386,8 +386,8 @@ class DeserializationTest {
         }
 
         assertEquals(
-            FlatDefaultImpl(43),
-            json5.decodeFromString<DefaultInterface>("{ kind: 'flat', integer: 43 }")
+            FlatDefaultImpl(15),
+            json5.decodeFromString<DefaultInterface>("{ kind: 'flat', a: 15 }")
         )
     }
 
@@ -459,8 +459,8 @@ class DeserializationTest {
             decode<DefaultInterface>("{ type: 'flat' }")
         }
 
-        assertContains(error.message, "missing field 'integer' in object at position")
-        assertEquals("integer", error.key)
+        assertContains(error.message, "missing field 'a' in object at position")
+        assertEquals("a", error.key)
         error.checkPosition(1, 1)
     }
 

@@ -34,7 +34,7 @@ internal sealed interface DefaultInterface
 
 @Serializable
 @SerialName("flat")
-internal data class FlatDefaultImpl(val integer: Int) : DefaultInterface
+internal data class FlatDefaultImpl(val a: Int, val b: Int = 100) : DefaultInterface
 
 @Serializable
 @SerialName("nested")

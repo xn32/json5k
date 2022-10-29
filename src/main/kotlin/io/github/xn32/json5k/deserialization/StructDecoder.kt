@@ -15,7 +15,7 @@ import kotlinx.serialization.modules.SerializersModule
 internal sealed class StructDecoder(protected val parent: MainDecoder, opener: Token.BeginToken) : CompositeDecoder {
     override val serializersModule: SerializersModule = parent.serializersModule
     protected val parser: InjectableLookaheadParser<Token> = parent.parser
-    protected val beginEvent: Event<Token>
+    protected val structOpenerEvent: Event<Token>
 
     init {
         val event = parent.parser.next()
@@ -30,7 +30,7 @@ internal sealed class StructDecoder(protected val parent: MainDecoder, opener: T
             throw UnexpectedValueError("$descriptor expected", pos)
         }
 
-        beginEvent = event
+        structOpenerEvent = event
     }
 
     override fun decodeBooleanElement(descriptor: SerialDescriptor, index: Int) = parent.decodeBoolean()

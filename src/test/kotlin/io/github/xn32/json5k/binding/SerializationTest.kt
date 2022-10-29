@@ -193,7 +193,7 @@ class SerializationTest {
     @Test
     fun `polymorphic type is serialized correctly`() {
         assertEquals(
-            "{obj:{type:\"flat\",integer:42}}",
+            "{obj:{type:\"flat\",a:42}}",
             encode(Wrapper<DefaultInterface>(FlatDefaultImpl(42)))
         )
     }
@@ -211,7 +211,7 @@ class SerializationTest {
         val json5 = Json5 { classDiscriminator = "kind" }
 
         assertEquals(
-            "{kind:\"flat\",integer:50}",
+            "{kind:\"flat\",a:50}",
             json5.encodeToString<DefaultInterface>(FlatDefaultImpl(50))
         )
     }

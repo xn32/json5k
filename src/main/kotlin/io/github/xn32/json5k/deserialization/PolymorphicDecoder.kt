@@ -25,7 +25,7 @@ internal class PolymorphicDecoder(
             val event = parser.next()
             val token = event.item
             if (objectLevel == 1u && token == Token.EndObject) {
-                throw MissingFieldError(classDiscriminator, beginEvent.pos)
+                throw MissingFieldError(classDiscriminator, structOpenerEvent.pos)
             } else if (objectLevel == 1u && token is Token.MemberName && token.name == classDiscriminator) {
                 classNameToken = parser.peek().mapType()
                 break
@@ -60,8 +60,8 @@ internal class PolymorphicDecoder(
         deserializer: DeserializationStrategy<T>,
         previousValue: T?
     ): T {
-        parser.inject(beginEvent)
-        parser.inject(eventBuffer)
+        parser.prepend(eventBuffer)
+        parser.prepend(structOpenerEvent)
         return parent.decodeSerializableValue(deserializer)
     }
 }

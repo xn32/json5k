@@ -16,8 +16,8 @@ internal data class Event<out T>(
 internal class InjectableLookaheadParser<T>(private val parser: Parser<T>) : LookaheadParser<T> {
     private val buffer: MutableList<Event<T>> = mutableListOf()
 
-    fun inject(event: Event<T>) = buffer.add(0, event)
-    fun inject(events: List<Event<T>>) = buffer.addAll(0, events)
+    fun prepend(event: Event<T>) = buffer.add(0, event)
+    fun prepend(events: List<Event<T>>) = buffer.addAll(0, events)
 
     override fun next(): Event<T> = buffer.removeFirstOrNull() ?: parser.next()
     override fun peek(): Event<T> = buffer.firstOrNull() ?: parser.next().also { buffer.add(it) }
