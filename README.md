@@ -1,10 +1,11 @@
 # json5k
 
-[![Build status](https://github.com/xn32/json5k/actions/workflows/build.yml/badge.svg)](https://github.com/xn32/json5k/actions/workflows/build.yml)
-[![API documentation](https://img.shields.io/badge/-Documentation-informational)](https://xn32.github.io/json5k/api/)
+[![Build status](https://img.shields.io/github/workflow/status/xn32/json5k/Build)](https://github.com/xn32/json5k/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/xn32/json5k/branch/main/graph/badge.svg?token=PBPA7T92CC)](https://codecov.io/gh/xn32/json5k)
+[![API documentation](https://img.shields.io/badge/docs-Dokka-informational)](https://xn32.github.io/json5k/api/)
 
-This is a [JSON5](https://json5.org/) library for the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) framework.
-Targeting the JVM, it serializes Kotlin object hierarchies into standard-compliant JSON5 output and vice versa.
+This is an experimental [JSON5](https://json5.org/) library for Kotlin/JVM.
+It makes use of the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) framework to serialize object hierarchies into standard-compliant JSON5 text and vice versa.
 
 ## Key features
 
@@ -13,10 +14,6 @@ Targeting the JVM, it serializes Kotlin object hierarchies into standard-complia
 - Carefully composed error messages for deserialization errors
 - Support for the serialization of comments for class properties
 - Rejection of duplicate keys during deserialization
-
-Unit tests for the most important application scenarios exist, but the framework has not been deployed to production yet. In addition, benchmarking and performance optimization are still to be done.
-
-Bug reports and other feedback are highly welcome, for example via the [issue tracker](https://github.com/xn32/json5k/issues) on GitHub.
 
 ## Setup instructions
 
@@ -111,7 +108,7 @@ Json5.decodeFromString<Person>("{ name: 'Carl', age: 42 }") // Person(name=Carl,
 
 // Deserialization errors:
 Json5.decodeFromString<Person>("{ name: 'Carl', age: 42, age: 10 }")
-    // DuplicateKeyError: duplicate key 'age' specified at position 1:26
+    // DuplicateKeyError: duplicate key 'age' at position 1:26
 ```
 
 ### Classes with `@SerialName` annotations
@@ -134,7 +131,7 @@ Json5.decodeFromString<IntWrapper>("{ integer: 10 }") // IntWrapper(int=10)
 
 // Deserialization errors:
 Json5.decodeFromString<IntWrapper>("{ int: 10 }")
-    // UnknownKeyError: unknown key 'int' specified at position 1:3
+    // UnknownKeyError: unknown key 'int' at position 1:3
 ```
 
 ### Polymorphic types
