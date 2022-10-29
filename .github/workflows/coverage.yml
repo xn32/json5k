@@ -31,4 +31,4 @@ jobs:
           path: build/reports/kover/html
       - uses: codecov/codecov-action@v3
         with:
-          files: ./build/reports/kover/report.xml
+          files: ./build/reports/kover/xml/report.xml
