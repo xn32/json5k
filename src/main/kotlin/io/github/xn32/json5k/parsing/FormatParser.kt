@@ -156,13 +156,11 @@ private class NumParser(private val reader: FormatReader) {
         return if (negate && value is Token.FloatingPoint) {
             Token.FloatingPoint(-value.number)
         } else if (negate && value is Token.UnsignedInteger) {
-            if (value.number > Long.MIN_VALUE.toULong()) {
-                throw OverflowError(pos)
-            } else {
+            if (value.number <= Long.MIN_VALUE.toULong()) {
                 Token.SignedInteger(-value.number.toLong())
+            } else {
+                throw OverflowError(pos)
             }
-        } else if (value is Token.UnsignedInteger && value.number <= Long.MAX_VALUE.toULong()) {
-            Token.SignedInteger(value.number.toLong())
         } else {
             value
         }

@@ -8,7 +8,7 @@ import io.github.xn32.json5k.ParsingError
 import io.github.xn32.json5k.check
 import io.github.xn32.json5k.checkPosition
 import io.github.xn32.json5k.format.Token
-import io.github.xn32.json5k.parsing.FormatParser
+import io.github.xn32.json5k.parserFor
 import io.github.xn32.json5k.parsing.Parser
 import org.junit.jupiter.api.Nested
 import kotlin.test.Test
@@ -16,8 +16,6 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-
-private fun parserFor(str: String) = FormatParser(str.byteInputStream())
 
 class FormatParserTest {
     @Nested
@@ -427,15 +425,15 @@ class FormatParserTest {
     inner class NumberParsingTest {
         @Test
         fun `zero is recognized`() {
-            parserFor("0").checkNext<Token.SignedInteger>(1, 1) {
-                assertEquals(0, it.number)
+            parserFor("0").checkNext<Token.UnsignedInteger>(1, 1) {
+                assertEquals(0u, it.number)
             }.checkEnd(1, 2)
         }
 
         @Test
         fun `decimal integer literal must not start with a zero`() {
             parserFor("01").apply {
-                checkNext<Token.SignedInteger>(1, 1)
+                checkNext<Token.UnsignedInteger>(1, 1)
                 checkError<CharError>(1, 2)
             }
         }
@@ -455,31 +453,20 @@ class FormatParserTest {
 
         @Test
         fun `hexadecimal number is recognized`() {
-            parserFor("0XaA01").checkNext<Token.SignedInteger>(1, 1) {
-                assertEquals(0xAA01, it.number)
+            parserFor("0XaA01").checkNext<Token.UnsignedInteger>(1, 1) {
+                assertEquals(0xAA01u, it.number)
             }.checkEnd(1, 7)
 
-            parserFor(" 0xaAbB ").checkNext<Token.SignedInteger>(1, 2) {
-                assertEquals(0xAABB, it.number)
+            parserFor(" 0xaAbB ").checkNext<Token.UnsignedInteger>(1, 2) {
+                assertEquals(0xAABBu, it.number)
             }.checkEnd(1, 9)
         }
 
         @Test
         fun `decimal integer is recognized`() {
-            parserFor("400").checkNext<Token.SignedInteger>(1, 1) {
-                assertEquals(400, it.number)
+            parserFor("400").checkNext<Token.UnsignedInteger>(1, 1) {
+                assertEquals(400u, it.number)
             }.checkEnd(1, 4)
-        }
-
-        @Test
-        fun `large decimal integer is returned as unsigned value`() {
-            parserFor("0x7FFFFFFFFFFFFFFF").checkNext<Token.SignedInteger>(1, 1) {
-                assertEquals(Long.MAX_VALUE, it.number)
-            }.checkEnd(1, 19)
-
-            parserFor("0x8000000000000000").checkNext<Token.UnsignedInteger>(1, 1) {
-                assertEquals(0x8000000000000000u, it.number)
-            }.checkEnd(1, 19)
         }
 
         @Test
@@ -509,16 +496,16 @@ class FormatParserTest {
 
         @Test
         fun `negative decimal integer is recognized`() {
-            parserFor("-11").checkNext<Token.SignedInteger>(1, 1) {
-                assertEquals(-11, it.number)
-            }.checkEnd(1, 4)
+            parserFor("-1").checkNext<Token.SignedInteger>(1, 1) {
+                assertEquals(-1, it.number)
+            }.checkEnd(1, 3)
         }
 
         @Test
         fun `negative hexadecimal integer is recognized`() {
-            parserFor("-0xFFE").checkNext<Token.SignedInteger>(1, 1) {
-                assertEquals(-0xFFE, it.number)
-            }.checkEnd(1, 7)
+            parserFor("-0xFF1E").checkNext<Token.SignedInteger>(1, 1) {
+                assertEquals(-0xFF1E, it.number)
+            }.checkEnd(1, 8)
         }
 
         @Test
@@ -553,7 +540,7 @@ class FormatParserTest {
             }
 
             parserFor("4 e10").apply {
-                checkNext<Token.SignedInteger>(1, 1)
+                checkNext<Token.UnsignedInteger>(1, 1)
                 checkError<CharError>(1, 3)
             }
         }

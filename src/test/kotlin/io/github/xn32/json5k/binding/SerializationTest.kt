@@ -5,6 +5,8 @@ import io.github.xn32.json5k.SerialComment
 import io.github.xn32.json5k.encodeToStream
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
 import java.io.ByteArrayOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -59,6 +61,7 @@ class SerializationTest {
     @Test
     fun `value class is encoded`() {
         assertEquals("\"wrapped\"", encode(StringWrapper("wrapped")))
+        assertEquals("{obj:\"str\"}", encode(Wrapper(StringWrapper("str"))))
     }
 
     @Test
@@ -318,4 +321,14 @@ class SerializationTest {
         )
     }
 
+    @Test
+    fun `class with contextual serializer is encoded`() {
+        val json5 = Json5 {
+            serializersModule = SerializersModule {
+                contextual(ColorAsStringSerializer)
+            }
+        }
+
+        assertEquals("\"0xff0000\"", json5.encodeToString(Color(0xff0000)))
+    }
 }

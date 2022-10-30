@@ -1,9 +1,9 @@
 package io.github.xn32.json5k
 
-internal fun Char?.isUnicodeLetter(): Boolean = this?.category in UNICODE_LETTER_CATEGORIES
-internal fun Char?.isUnicodeOther(): Boolean = this?.category in UNICODE_OTHER_CATEGORIES
-internal fun Char?.isHexDigit(): Boolean = this in DECIMAL_DIGITS || this?.lowercaseChar() in HEX_LETTERS
-internal fun Char?.isDecimalDigit(): Boolean = this in DECIMAL_DIGITS
+internal fun Char.isUnicodeLetter(): Boolean = this.category in UNICODE_LETTER_CATEGORIES
+internal fun Char.isUnicodeOther(): Boolean = this.category in UNICODE_OTHER_CATEGORIES
+internal fun Char.isHexDigit(): Boolean = this in DECIMAL_DIGITS || this.lowercaseChar() in HEX_LETTERS
+internal fun Char.isDecimalDigit(): Boolean = this in DECIMAL_DIGITS
 
 private val DECIMAL_DIGITS = '0'..'9'
 private val HEX_LETTERS = 'a'..'f'

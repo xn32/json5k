@@ -8,8 +8,13 @@ import io.github.xn32.json5k.UnexpectedValueError
 import io.github.xn32.json5k.UnknownKeyError
 import io.github.xn32.json5k.checkPosition
 import io.github.xn32.json5k.decodeFromStream
+import io.github.xn32.json5k.deserialization.mapType
+import io.github.xn32.json5k.format.Token
+import io.github.xn32.json5k.parserFor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
@@ -68,6 +73,7 @@ class DeserializationTest {
     @Test
     fun `value class is decoded`() {
         assertEquals(StringWrapper("wrapped"), decode("'wrapped'"))
+        assertEquals(Wrapper(StringWrapper("str")), decode("{obj:\"str\"}"))
     }
 
     @Test
@@ -153,9 +159,9 @@ class DeserializationTest {
     }
 
     @Test
-    fun `deserialization of unsigned numbers works`() {
+    fun `range check for unsigned integers works`() {
         val error = assertFailsWith<UnexpectedValueError> {
-            decode<UByte>("-1")
+            decode<UByte>("256")
         }
 
         assertContains(error.message, "unsigned integer in range [0..255] expected at position")
@@ -163,13 +169,60 @@ class DeserializationTest {
     }
 
     @Test
-    fun `missing value is reported`() {
-        val error = assertFailsWith<UnexpectedValueError> {
+    fun `range check for signed integers works`() {
+        val minError = assertFailsWith<UnexpectedValueError> {
+            decode<Byte>("-129")
+        }
+
+        val maxError = assertFailsWith<UnexpectedValueError> {
+            decode<Byte>("128")
+        }
+
+        assertContains(minError.message, "signed integer in range [-128..127] expected at position")
+        assertContains(maxError.message, "signed integer in range [-128..127] expected at position")
+
+        for (error in listOf(minError, maxError)) {
+            maxError.checkPosition(1, 1)
+        }
+    }
+
+    @Test
+    fun `unexpected parser value is reported`() {
+        val intError = assertFailsWith<UnexpectedValueError> {
             decode<Wrapper<Int>>("{ obj: { a: 10 }}")
         }
 
-        assertContains(error.message, "integer expected at position")
-        error.checkPosition(1, 8)
+        val unsignedIntError = assertFailsWith<UnexpectedValueError> {
+            decode<Wrapper<UInt>>("{ obj: -10 }")
+        }
+
+        val floatError = assertFailsWith<UnexpectedValueError> {
+            decode<Wrapper<Double>>("{ obj: true }")
+        }
+
+        val boolError = assertFailsWith<UnexpectedValueError> {
+            decode<Wrapper<Boolean>>("{ obj: null }")
+        }
+
+        val stringError = assertFailsWith<UnexpectedValueError> {
+            decode<Wrapper<String>>("{ obj: [1, 2] }")
+        }
+
+        val unknownError = assertFailsWith<UnexpectedValueError> {
+            val tokenEvent = parserFor("10").next()
+            tokenEvent.mapType<Token.Null>()
+        }
+
+        assertContains(intError.message, "integer expected at position")
+        assertContains(unsignedIntError.message, "unsigned integer expected at position")
+        assertContains(floatError.message, "floating-point number expected at position")
+        assertContains(boolError.message, "boolean value expected at position")
+        assertContains(stringError.message, "string literal expected at position")
+        assertContains(unknownError.message, "unexpected value at position")
+
+        for (error in listOf(intError, floatError, boolError, stringError)) {
+            error.checkPosition(1, 8)
+        }
     }
 
     @Test
@@ -514,12 +567,13 @@ class DeserializationTest {
     }
 
     @Test
-    fun `value errors are reported`() {
-        val error = assertFailsWith<UnexpectedValueError> {
-            decode<Byte>("5000")
+    fun `class with contextual serializer is decoded`() {
+        val json5 = Json5 {
+            serializersModule = SerializersModule {
+                contextual(ColorAsStringSerializer)
+            }
         }
 
-        assertContains(error.message, "signed integer in range [-128..127] expected at position")
-        error.checkPosition(1, 1)
+        assertEquals(Color(0xff0000), json5.decodeFromString("'0xff0000'"))
     }
 }

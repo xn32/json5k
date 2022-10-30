@@ -176,13 +176,7 @@ private class Json5Impl(
     override fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, inputStream: InputStream): T {
         val parser = InjectableLookaheadParser(FormatParser(inputStream))
         val res = MainDecoder(serializersModule, parser, settings).decodeSerializableValue(deserializer)
-
-        while (true) {
-            if (parser.next().item == Token.EndOfFile) {
-                break
-            }
-        }
-
+        parser.next()
         return res
     }
 
@@ -216,15 +210,15 @@ inline fun <reified T> Json5.decodeFromStream(inputStream: InputStream): T =
 inline fun <reified T> Json5.encodeToStream(value: T, outputStream: OutputStream) =
     encodeToStream(serializersModule.serializer(), value, outputStream)
 
-internal val unsignedDescriptors = setOf(
+private val unsignedDescriptors = setOf(
     UByte.serializer(), UShort.serializer(), UInt.serializer(), ULong.serializer()
 ).map(DeserializationStrategy<*>::descriptor)
 
 internal val SerialDescriptor.isUnsignedNumber: Boolean
-    get() = isInline && this in unsignedDescriptors
+    get() = this in unsignedDescriptors
 
 @OptIn(ExperimentalSerializationApi::class)
 internal fun SerialDescriptor.getClassDiscriminator(settings: Settings): String {
-    val annotation = annotations.filterIsInstance<ClassDiscriminator>().firstOrNull()
-    return annotation?.discriminator ?: settings.classDiscriminator
+    val discriminator = annotations.filterIsInstance<ClassDiscriminator>().firstOrNull()?.discriminator
+    return discriminator ?: settings.classDiscriminator
 }

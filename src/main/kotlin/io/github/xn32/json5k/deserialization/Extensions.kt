@@ -11,14 +11,11 @@ internal inline fun <reified T : Token.Value> Event<Token>.extractType(): T = it
 private inline fun <reified T : Token.Value> Token.getAsType(errorPos: ReaderPosition): T {
     if (this !is T) {
         val descriptor = when (T::class) {
-            Token.Num::class -> "numeric value"
             Token.Integer::class -> "integer"
-            Token.SignedInteger::class -> "signed integer"
             Token.UnsignedInteger::class -> "unsigned integer"
-            Token.FloatingPoint::class -> "floating point number"
+            Token.FloatingPoint::class -> "floating-point number"
             Token.Bool::class -> "boolean value"
-            Token.Str::class -> "string"
-            Token.Null::class -> "null"
+            Token.Str::class -> "string literal"
             else -> null
         }
 

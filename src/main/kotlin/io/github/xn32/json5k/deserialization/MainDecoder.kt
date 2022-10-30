@@ -178,14 +178,11 @@ private fun Parser<Token>.getInteger(limits: LongRange): Long {
 }
 
 private fun Parser<Token>.getUnsignedInteger(max: ULong): ULong {
-    val (pos, token) = next().mapType<Token.Integer>()
+    val (pos, token) = next().mapType<Token.UnsignedInteger>()
 
-    return if (token is Token.SignedInteger && token.number >= 0 && token.number.toULong() <= max) {
-        token.number.toULong()
-    } else if (token is Token.UnsignedInteger && token.number in 0u.toULong()..max) {
+    return if (token.number <= max) {
         token.number
     } else {
         throw UnexpectedValueError("unsigned integer in range [0..$max] expected", pos)
     }
 }
-

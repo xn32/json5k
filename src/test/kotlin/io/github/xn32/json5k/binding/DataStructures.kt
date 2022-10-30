@@ -1,8 +1,14 @@
 package io.github.xn32.json5k.binding
 
 import io.github.xn32.json5k.ClassDiscriminator
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @JvmInline
 @Serializable
@@ -51,3 +57,20 @@ internal sealed interface CustomInterface
 @Serializable
 @SerialName("main")
 internal data class CustomImpl(val name: String?) : CustomInterface
+
+internal data class Color(val rgb: Int)
+
+internal object ColorAsStringSerializer : KSerializer<Color> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Color", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: Color) {
+        val string = value.rgb.toString(16).padStart(6, '0')
+        encoder.encodeString("0x$string")
+    }
+
+    override fun deserialize(decoder: Decoder): Color {
+        val string = decoder.decodeString()
+        require(string.startsWith("0x"))
+        return Color(string.removePrefix("0x").toInt(16))
+    }
+}

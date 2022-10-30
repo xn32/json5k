@@ -16,7 +16,6 @@ internal class ObjectDecoder(parent: MainDecoder) : StructDecoder(parent, Token.
             throw UnknownKeyError(token.name, pos)
         }
 
-        check(token is Token.EndObject)
         return CompositeDecoder.DECODE_DONE
     }
 
