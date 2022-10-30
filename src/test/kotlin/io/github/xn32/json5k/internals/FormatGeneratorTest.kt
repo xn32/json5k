@@ -7,88 +7,97 @@ import java.io.ByteArrayOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-private val COMPRESSED = OutputStrategy.Compressed
-private val HUMAN_READABLE = OutputStrategy.HumanReadable(4, '"', quoteMemberNames = false)
+private fun newHumanReadableStrategy(
+    indentationWidth: Int = 4,
+    nativeLineTerminators: Boolean = false,
+    quoteCharacter: Char = '"',
+    quoteMemberNames: Boolean = false,
+) = OutputStrategy.HumanReadable(
+    indentationWidth,
+    nativeLineTerminators,
+    quoteCharacter,
+    quoteMemberNames
+)
 
 class FormatGeneratorTest {
     @Test
     fun `top-level null is written`() {
-        assertEquals("null", generate(COMPRESSED) {
+        assertEquals("null", generate(OutputStrategy.Compressed) {
             put(Token.Null)
         })
     }
 
     @Test
     fun `top-level true and false are written`() {
-        assertEquals("true", generate(COMPRESSED) {
+        assertEquals("true", generate(OutputStrategy.Compressed) {
             put(Token.Bool(true))
         })
 
-        assertEquals("false", generate(COMPRESSED) {
+        assertEquals("false", generate(OutputStrategy.Compressed) {
             put(Token.Bool(false))
         })
     }
 
     @Test
     fun `signed negative integer is written`() {
-        assertEquals("-4443", generate(COMPRESSED) {
+        assertEquals("-4443", generate(OutputStrategy.Compressed) {
             put(Token.SignedInteger(-4443))
         })
     }
 
     @Test
     fun `signed positive integer is written`() {
-        assertEquals("33332", generate(COMPRESSED) {
+        assertEquals("33332", generate(OutputStrategy.Compressed) {
             put(Token.SignedInteger(33332))
         })
     }
 
     @Test
     fun `unsigned integer is written`() {
-        assertEquals("7371823712", generate(COMPRESSED) {
+        assertEquals("7371823712", generate(OutputStrategy.Compressed) {
             put(Token.UnsignedInteger(7371823712u))
         })
     }
 
     @Test
     fun `large floating point number is written`() {
-        assertEquals("4.0E30", generate(COMPRESSED) {
+        assertEquals("4.0E30", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(4e30))
         })
     }
 
     @Test
     fun `small floating point number is written`() {
-        assertEquals("-2.0E-10", generate(COMPRESSED) {
+        assertEquals("-2.0E-10", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(-2e-10))
         })
     }
 
     @Test
     fun `floating point number with exponent close to zero is written`() {
-        assertEquals("55.0", generate(COMPRESSED) {
+        assertEquals("55.0", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(55.0))
         })
     }
 
     @Test
     fun `numeric literals are written`() {
-        assertEquals("Infinity", generate(COMPRESSED) {
+        assertEquals("Infinity", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(Double.POSITIVE_INFINITY))
         })
 
-        assertEquals("-Infinity", generate(COMPRESSED) {
+        assertEquals("-Infinity", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(Double.NEGATIVE_INFINITY))
         })
 
-        assertEquals("NaN", generate(COMPRESSED) {
+        assertEquals("NaN", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(Double.NaN))
         })
     }
 
     @Test
     fun `empty top-level object is written`() {
-        assertEquals("{}", generate(COMPRESSED) {
+        assertEquals("{}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.EndObject)
         })
@@ -96,7 +105,7 @@ class FormatGeneratorTest {
 
     @Test
     fun `top-level object with single member is written`() {
-        assertEquals("{abc:10}", generate(COMPRESSED) {
+        assertEquals("{abc:10}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("abc"))
             put(Token.SignedInteger(10))
@@ -106,7 +115,7 @@ class FormatGeneratorTest {
 
     @Test
     fun `top-level object with multiple members is written`() {
-        assertEquals("{first:10,second:null,third:1.1}", generate(COMPRESSED) {
+        assertEquals("{first:10,second:null,third:1.1}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("first"))
             put(Token.SignedInteger(10))
@@ -120,7 +129,7 @@ class FormatGeneratorTest {
 
     @Test
     fun `nested structures are written`() {
-        assertEquals("[{a:10},{b:20}]", generate(COMPRESSED) {
+        assertEquals("[{a:10},{b:20}]", generate(OutputStrategy.Compressed) {
             put(Token.BeginArray)
             put(Token.BeginObject)
             put(Token.MemberName("a"))
@@ -136,42 +145,42 @@ class FormatGeneratorTest {
 
     @Test
     fun `strings are enclosed in double quotation marks`() {
-        assertEquals("\"string\"", generate(COMPRESSED) {
+        assertEquals("\"string\"", generate(OutputStrategy.Compressed) {
             put(Token.Str("string"))
         })
     }
 
     @Test
     fun `CR and LF in strings are escaped`() {
-        assertEquals("\"first\\r\\nsecond\"", generate(COMPRESSED) {
+        assertEquals("\"first\\r\\nsecond\"", generate(OutputStrategy.Compressed) {
             put(Token.Str("first\r\nsecond"))
         })
     }
 
     @Test
     fun `quote char and backslash in strings are escaped`() {
-        assertEquals(""""string = \"\\underline\", char = '\\'"""", generate(COMPRESSED) {
+        assertEquals(""""string = \"\\underline\", char = '\\'"""", generate(OutputStrategy.Compressed) {
             put(Token.Str("string = \"\\underline\", char = '\u005c'"))
         })
     }
 
     @Test
     fun `LS and PS in strings are escaped`() {
-        assertEquals("\"x\\u2028y\\u2029z\"", generate(COMPRESSED) {
+        assertEquals("\"x\\u2028y\\u2029z\"", generate(OutputStrategy.Compressed) {
             put(Token.Str("x\u2028y\u2029z"))
         })
     }
 
     @Test
     fun `other chars in strings are not escaped`() {
-        assertEquals("\"\u0000\u2000\ud83c\udfbc\"", generate(COMPRESSED) {
+        assertEquals("\"\u0000\u2000\ud83c\udfbc\"", generate(OutputStrategy.Compressed) {
             put(Token.Str("\u0000\u2000\ud83c\udfbc"))
         })
     }
 
     @Test
     fun `member names are quoted only when necessary`() {
-        assertEquals("{key:10,\"~a\":20}", generate(COMPRESSED) {
+        assertEquals("{key:10,\"~a\":20}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("key"))
             put(Token.SignedInteger(10))
@@ -192,7 +201,7 @@ class FormatGeneratorTest {
                     ]
                 }
             """.trimIndent(),
-            generate(HUMAN_READABLE) {
+            generate(newHumanReadableStrategy()) {
                 put(Token.BeginObject)
                 put(Token.MemberName("number"))
                 put(Token.SignedInteger(-11))
@@ -213,7 +222,7 @@ class FormatGeneratorTest {
                   key: -12
                 }
             """.trimIndent(),
-            generate(OutputStrategy.HumanReadable(2, '"', false)) {
+            generate(newHumanReadableStrategy(indentationWidth = 2)) {
                 put(Token.BeginObject)
                 put(Token.MemberName("key"))
                 put(Token.SignedInteger(-12))
@@ -230,7 +239,7 @@ class FormatGeneratorTest {
                     "key": 1000
                 }
             """.trimIndent(),
-            generate(OutputStrategy.HumanReadable(4, '"', true)) {
+            generate(newHumanReadableStrategy(quoteMemberNames = true)) {
                 put(Token.BeginObject)
                 put(Token.MemberName("key"))
                 put(Token.UnsignedInteger(1000u))
@@ -241,12 +250,12 @@ class FormatGeneratorTest {
 
     @Test
     fun `empty structs are compressed in human-readable output`() {
-        assertEquals("{}", generate(HUMAN_READABLE) {
+        assertEquals("{}", generate(newHumanReadableStrategy()) {
             put(Token.BeginObject)
             put(Token.EndObject)
         })
 
-        assertEquals("[]", generate(HUMAN_READABLE) {
+        assertEquals("[]", generate(newHumanReadableStrategy()) {
             put(Token.BeginArray)
             put(Token.EndArray)
         })
@@ -263,7 +272,7 @@ class FormatGeneratorTest {
                     ]
                 ]
             """.trimIndent(),
-            generate(HUMAN_READABLE) {
+            generate(newHumanReadableStrategy()) {
                 put(Token.BeginArray)
                 put(Token.BeginObject)
                 put(Token.EndObject)
@@ -278,21 +287,21 @@ class FormatGeneratorTest {
 
     @Test
     fun `strings in human-readable output are enclosed in double quotation marks`() {
-        assertEquals("\"12'34\\\"56\"", generate(HUMAN_READABLE) {
+        assertEquals("\"12'34\\\"56\"", generate(newHumanReadableStrategy()) {
             put(Token.Str("12'34\"56"))
         })
     }
 
     @Test
     fun `quote char for strings in human-readable output is configurable`() {
-        assertEquals("'12\\\'34\"56'", generate(OutputStrategy.HumanReadable(7, '\'', false)) {
+        assertEquals("'12\\\'34\"56'", generate(newHumanReadableStrategy(quoteCharacter = '\'')) {
             put(Token.Str("12'34\"56"))
         })
     }
 
     @Test
     fun `serial comments are not present in compressed output`() {
-        assertEquals("{a:10}", generate(COMPRESSED) {
+        assertEquals("{a:10}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             writeComment("comment")
             put(Token.MemberName("a"))
@@ -314,7 +323,7 @@ class FormatGeneratorTest {
                     b: 12
                 }
             """.trimIndent(),
-            generate(HUMAN_READABLE) {
+            generate(newHumanReadableStrategy()) {
                 put(Token.BeginObject)
                 put(Token.MemberName("a"))
                 put(Token.SignedInteger(11))
@@ -341,7 +350,7 @@ class FormatGeneratorTest {
                     x: null
                 }
             """.trimIndent(),
-            generate(HUMAN_READABLE) {
+            generate(newHumanReadableStrategy()) {
                 put(Token.BeginObject)
                 writeComment("a\r\nb\nc\rd\u2028e\u2029f")
                 put(Token.MemberName("x"))

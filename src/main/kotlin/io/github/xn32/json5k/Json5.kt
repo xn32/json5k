@@ -41,7 +41,7 @@ interface Json5 : StringFormat {
     /**
      * This companion object is the default implementation of the [Json5] interface.
      *
-     * It passes an empty `SerializersModule` to the kotlinx.serialization framework and
+     * It passes an empty [SerializersModule] to the kotlinx.serialization framework and
      * uses `type` as the class discriminator for the serialization and deserialization of
      * polymorphic types. During the serialization process, it does not encode default values
      * and generates compressed output (without line breaks for better readability).
@@ -51,12 +51,12 @@ interface Json5 : StringFormat {
     /**
      * Serializes the given [value] using the provided [serializer] and returns the value as a string.
      *
-     * If multi-line output is requested, the function will use UNIX-style line endings. In any case,
-     * a final newline character is *not* generated.
+     * Depending on the value of [ConfigBuilder.nativeLineTerminators], the function will use UNIX-style or native
+     * line endings. A final newline character is *not* generated.
      *
      * @param serializer [SerializationStrategy] to use for the serialization.
      * @param value The object hierarchy to serialize.
-     * @return The generated JSON5 output (using LF as line terminator).
+     * @return The generated JSON5 output.
      */
     override fun <T> encodeToString(serializer: SerializationStrategy<T>, value: T): String
 
@@ -77,8 +77,8 @@ interface Json5 : StringFormat {
      *
      * Data written to [outputStream] will have UTF-8 encoding. It is not closed upon completion of this operation.
      *
-     * If multi-line output is requested, the function will use UNIX-style line endings. In any case,
-     * a final newline character is *not* generated.
+     * Depending on the value of [ConfigBuilder.nativeLineTerminators], the function will use UNIX-style or native
+     * line endings. A final newline character is *not* generated.
      *
      * @param serializer [SerializationStrategy] to use for the serialization.
      * @param value The object hierarchy to serialize.

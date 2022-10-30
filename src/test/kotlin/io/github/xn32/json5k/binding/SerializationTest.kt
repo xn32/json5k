@@ -331,4 +331,21 @@ class SerializationTest {
 
         assertEquals("\"0xff0000\"", json5.encodeToString(Color(0xff0000)))
     }
+
+    @Test
+    fun `generation of native line terminators is possible`() {
+        val json5 = Json5 {
+            prettyPrint = true
+            nativeLineTerminators = true
+        }
+
+        assertEquals(
+            """
+                {
+                    obj: 10
+                }
+            """.trimIndent().replace("\n", System.lineSeparator()),
+            json5.encodeToString(Wrapper(10))
+        )
+    }
 }

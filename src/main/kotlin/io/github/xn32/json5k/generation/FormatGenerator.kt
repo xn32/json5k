@@ -11,7 +11,7 @@ import java.io.OutputStream
 import java.io.Writer
 
 private const val INDENT_CHAR = ' '
-private const val OUTPUT_LINE_TERMINATOR = "\n"
+private const val LINE_TERMINATOR = "\n"
 private val LINE_DELIMITERS = arrayOf("\r\n") + Specification.LINE_TERMINATORS.map(Char::toString)
 
 internal class FormatGenerator(stream: OutputStream, private val outputStrategy: OutputStrategy) : Flushable {
@@ -55,7 +55,12 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
             return
         }
 
-        writer.write(OUTPUT_LINE_TERMINATOR)
+        if (outputStrategy.nativeLineTerminators) {
+            writer.newLine()
+        } else {
+            writer.write(LINE_TERMINATOR)
+        }
+
         repeat(outputStrategy.indentationWith * (tracker.nestingLevel + levelOffset)) {
             writer.write(INDENT_CHAR.code)
         }

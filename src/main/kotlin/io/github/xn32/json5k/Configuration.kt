@@ -13,8 +13,8 @@ class ConfigBuilder {
     var serializersModule: SerializersModule? = null
 
     /**
-     * Class discriminator to use for the serialization and deserialization of polymorphic types without
-     * a [ClassDiscriminator] annotation.
+     * Class discriminator to use for the serialization and deserialization of polymorphic types. This setting
+     * defaults to `type` and can be overwritten on a per-class basis using the [ClassDiscriminator] annotation.
      */
     var classDiscriminator: String = "type"
 
@@ -31,21 +31,27 @@ class ConfigBuilder {
 
     /**
      * Number of spaces to use for indenting each hierarchy level (objects/arrays) in generated JSON5 output.
-     * This setting does only have an effect if the [prettyPrint] option is activated.
+     * This setting has an effect only if the [prettyPrint] option is activated.
      */
     var indentationWidth: Int = 4
 
     /**
+     * Use the native line terminator (instead of LF) when generating human-readable output. This setting
+     * has an effect only if the [prettyPrint] option is activated.
+     */
+    var nativeLineTerminators: Boolean = false
+
+    /**
      * Request names of serialized object members to be quoted even if the quotation marks could be dropped.
-     * This setting does only have an effect if the [prettyPrint] option is activated. If compressed single-line
-     * output is generated, member names will be quoted only when necessary (regardless of this option).
+     * This setting has an effect only if the [prettyPrint] option is activated. If compressed single-line
+     * output is generated, member names will be quoted only when necessary.
      */
     var quoteMemberNames: Boolean = false
 
     /**
      * Use single quotes instead of double quotes when serializing strings and member names in human-readable
-     * output. This setting does only have an effect if the [prettyPrint] option is activated. If compressed
-     * single-line output is generated, double quotes will be used (regardless of this option).
+     * output. This setting has an effect only if the [prettyPrint] option is activated. If compressed
+     * single-line output is generated, double quotes will be used.
      */
     var useSingleQuotes: Boolean = false
 }
@@ -64,6 +70,7 @@ internal sealed interface OutputStrategy {
 
     data class HumanReadable(
         val indentationWith: Int,
+        val nativeLineTerminators: Boolean,
         override val quoteCharacter: Char,
         override val quoteMemberNames: Boolean,
     ) : OutputStrategy
@@ -79,8 +86,9 @@ internal fun ConfigBuilder.toSettings(): Settings = Settings(
         require(indentationWidth > 0)
         OutputStrategy.HumanReadable(
             indentationWith = indentationWidth,
+            nativeLineTerminators = nativeLineTerminators,
             quoteCharacter = if (useSingleQuotes) SINGLE_QUOTE else DOUBLE_QUOTE,
-            quoteMemberNames = quoteMemberNames
+            quoteMemberNames = quoteMemberNames,
         )
     } else {
         OutputStrategy.Compressed
