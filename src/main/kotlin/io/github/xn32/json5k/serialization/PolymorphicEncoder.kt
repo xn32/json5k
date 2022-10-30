@@ -9,16 +9,15 @@ import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 
 internal class PolymorphicEncoder(descriptor: SerialDescriptor, parent: MainEncoder) : StructEncoder(parent) {
-    private val discriminatorName: String = descriptor.getClassDiscriminator(parent.settings)
-    private var discriminatorValue: String? = null
+    private val classDiscriminator: String = descriptor.getClassDiscriminator(parent.settings)
+    private var className: String? = null
 
     init {
         generator.put(Token.BeginObject)
     }
 
     override fun encodeStringElement(descriptor: SerialDescriptor, index: Int, value: String) {
-        require(index == 0)
-        discriminatorValue = value
+        className = value
     }
 
     override fun <T> encodeSerializableElement(
@@ -27,9 +26,7 @@ internal class PolymorphicEncoder(descriptor: SerialDescriptor, parent: MainEnco
         serializer: SerializationStrategy<T>,
         value: T
     ) {
-        require(index == 1)
-        val discriminatorValue = checkNotNull(this.discriminatorValue)
-        TypeInjectingEncoder(parent, discriminatorName, discriminatorValue).encodeSerializableValue(serializer, value)
+        TypeInjectingEncoder(parent, classDiscriminator, className!!).encodeSerializableValue(serializer, value)
     }
 
     override fun endStructure(descriptor: SerialDescriptor) {
@@ -40,16 +37,16 @@ internal class PolymorphicEncoder(descriptor: SerialDescriptor, parent: MainEnco
 @OptIn(ExperimentalSerializationApi::class)
 private class TypeInjectingEncoder(
     private val parent: MainEncoder,
-    private val discriminatorName: String,
-    private val discriminatorValue: String,
+    private val classDiscriminator: String,
+    private val className: String,
 ) : Encoder {
     override val serializersModule = parent.serializersModule
     private val generator = parent.generator
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
-        generator.put(Token.MemberName(discriminatorName))
-        generator.put(Token.Str(discriminatorValue))
-        return ClassEncoder(parent, noDelimiters = true, reservedKeys = setOf(discriminatorName))
+        generator.put(Token.MemberName(classDiscriminator))
+        generator.put(Token.Str(className))
+        return ClassEncoder(parent, noDelimiters = true, reservedKeys = setOf(classDiscriminator))
     }
 
     override fun encodeBoolean(value: Boolean) = throw UnsupportedOperationException()

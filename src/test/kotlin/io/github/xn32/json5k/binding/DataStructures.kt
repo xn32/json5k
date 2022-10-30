@@ -44,7 +44,7 @@ internal data class FlatDefaultImpl(val a: Int, val b: Int = 100) : DefaultInter
 
 @Serializable
 @SerialName("nested")
-internal data class NestedDefaultImpl(val inner: Wrapper<Int>) : DefaultInterface
+internal data class NestedDefaultImpl(val a: Int, val x: Wrapper<Int>) : DefaultInterface
 
 @Serializable
 @SerialName("invalid")

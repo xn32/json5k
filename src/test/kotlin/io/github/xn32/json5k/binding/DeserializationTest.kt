@@ -365,7 +365,7 @@ class DeserializationTest {
     @Test
     fun `nested polymorphic class is decoded`() {
         assertEquals(
-            NestedDefaultImpl(Wrapper(5)), decode<DefaultInterface>("{ type: 'nested', inner: { obj: 5 } }")
+            NestedDefaultImpl(0, Wrapper(5)), decode<DefaultInterface>("{ x: { obj: 5 }, type: 'nested', a: 0 }")
         )
     }
 
