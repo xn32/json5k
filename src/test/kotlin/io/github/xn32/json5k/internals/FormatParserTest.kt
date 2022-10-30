@@ -115,6 +115,13 @@ class FormatParserTest {
                 checkNext<Token.Bool>(1, 8)
                 checkError<CharError>(1, 12)
             }
+
+            parserFor("{a: 10]").apply {
+                checkNext<Token.BeginObject>(1, 1)
+                checkNext<Token.MemberName>(1, 2)
+                checkNext<Token.Integer>(1, 5)
+                checkError<CharError>(1, 7)
+            }
         }
 
         @Test
@@ -145,6 +152,56 @@ class FormatParserTest {
                 checkNext<Token.BeginObject>(1, 1)
                 checkNext<Token.MemberName>(1, 2)
                 checkError<CharError>(1, 6)
+            }
+
+            parserFor("{key=true}").apply {
+                checkNext<Token.BeginObject>(1, 1)
+                checkError<CharError>(1, 5)
+            }
+
+            parserFor("{key").apply {
+                checkNext<Token.BeginObject>(1, 1)
+                checkError<EndOfFileError>(1, 5)
+            }
+        }
+
+        @Test
+        fun `invalid member name causes error`() {
+            parserFor("{#x:10}").apply {
+                checkNext<Token.BeginObject>(1, 1)
+                checkError<CharError>(1, 2)
+            }
+
+            parserFor("{_\\n:10}").apply {
+                checkNext<Token.BeginObject>(1, 1)
+                checkError<CharError>(1, 4)
+            }
+
+            parserFor("{_\\").apply {
+                checkNext<Token.BeginObject>(1, 1)
+                checkError<EndOfFileError>(1, 4)
+            }
+        }
+
+        @Test
+        fun `member name can be quoted or identifier names`() {
+            parserFor("{'a':10,\"b\":20}").apply {
+                checkNext<Token.BeginObject>(1, 1)
+                checkNext<Token.MemberName>(1, 2)
+                checkNext<Token.Integer>(1, 6)
+                checkNext<Token.MemberName>(1, 9)
+                checkNext<Token.Integer>(1, 13)
+                checkNext<Token.EndObject>(1, 15)
+            }
+
+            parserFor("{\\u0069d: 0}").apply {
+                checkNext<Token.BeginObject>(1, 1)
+                checkNext<Token.MemberName>(1, 2) {
+                    assertEquals("id", it.name)
+                }
+
+                checkNext<Token.Integer>(1, 11)
+                checkNext<Token.EndObject>(1, 12)
             }
         }
 
@@ -327,6 +384,13 @@ class FormatParserTest {
         fun `line terminator in string causes error`() {
             parserFor("\t'abc de\nabc de'").checkError<CharError>(1, 9) {
                 assertEquals('\n', it.char)
+            }
+        }
+
+        @Test
+        fun `single escape sequence is recognized`() {
+            parserFor("'x\\by'").checkNext<Token.Str>(1, 1) {
+                assertEquals("x\by", it.string)
             }
         }
 
@@ -551,6 +615,26 @@ class FormatParserTest {
                 checkNext<Token.FloatingPoint>(1, 1)
                 checkError<CharError>(1, 6)
             }
+        }
+
+        @Test
+        fun `incomplete number is detected`() {
+            parserFor("+").checkError<EndOfFileError>(1, 2)
+        }
+
+        @Test
+        fun `incomplete hexadecimal number is detected`() {
+            parserFor("0x").checkError<EndOfFileError>(1, 3)
+        }
+
+        @Test
+        fun `incomplete exponent is detected`() {
+            parserFor("1e").checkError<EndOfFileError>(1, 3)
+        }
+
+        @Test
+        fun `unknown numeric literal is detected`() {
+            parserFor("+None").checkError<LiteralError>(1, 2)
         }
     }
 }

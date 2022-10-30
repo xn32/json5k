@@ -76,7 +76,7 @@ internal class FormatParser(stream: InputStream) : Parser<Token> {
         val memberName = Token.MemberName(
             when (reader.peek()) {
                 '"', '\'' -> stringParser.parseQuotedString()
-                else -> stringParser.parseLiteral()
+                else -> parseIdentifierName()
             }
         )
 
@@ -89,12 +89,48 @@ internal class FormatParser(stream: InputStream) : Parser<Token> {
         return memberName
     }
 
+    private fun parseIdentifierName(): String {
+        if (!Specification.startsIdentifier(reader.peek()) && reader.peek() != '\\') {
+            reader.throwTokenError()
+        }
+
+        val builder = StringBuilder()
+        while (true) {
+            val char = reader.peekOrNull()
+            if (char == '\\') {
+                reader.consume()
+                if (reader.peekOrNull() != 'u') {
+                    reader.throwTokenError()
+                }
+
+                reader.consume()
+                builder.append(reader.readHexSequence(U_HEX_DIGITS))
+            } else if (char != null && Specification.isIdentifierPart(char)) {
+                builder.append(reader.consume())
+            } else {
+                break
+            }
+        }
+
+        return builder.toString()
+    }
+
     private fun parseValue(): Token {
         return when (reader.peekOrNull()) {
-            '{', '[' -> parseStructOpener()
             '"', '\'' -> Token.Str(stringParser.parseQuotedString())
             in 'a'..'z', in 'A'..'Z' -> parseLiteral()
             in '0'..'9', '+', '-', '.' -> numParser.parseNumber()
+
+            '{' -> {
+                reader.consume()
+                Token.BeginObject
+            }
+
+            '[' -> {
+                reader.consume()
+                Token.BeginArray
+            }
+
             else -> reader.throwTokenError()
         }
     }
@@ -105,16 +141,7 @@ internal class FormatParser(stream: InputStream) : Parser<Token> {
         return numLiteralOf(letters) ?: miscLiteralOf(letters) ?: throw LiteralError(letters, pos)
     }
 
-    private fun parseStructOpener(): Token = when (reader.consume()) {
-        '{' -> Token.BeginObject
-        '[' -> Token.BeginArray
-        else -> error("struct opener expected")
-    }
-
     private fun parseStructCloser(): Token {
-        assert(!reader.done)
-        assert(tracker.inStruct)
-
         val char = reader.peek()
         val token = if (tracker.inObjectStruct && char == '}') {
             Token.EndObject
@@ -167,7 +194,6 @@ private class NumParser(private val reader: FormatReader) {
     }
 
     private fun parseZeroPrefixedNumber(): Token.Num {
-        check(reader.peek() == '0')
         val pos = reader.pos
         reader.consume()
         return when (reader.peekOrNull()) {
@@ -222,20 +248,17 @@ private class NumParser(private val reader: FormatReader) {
 
         builder.appendWhile(reader, Char::isDecimalDigit)
         val hasDecimalPoint = reader.peekOrNull() == '.'
-
         if (hasDecimalPoint) {
             builder.append(reader.consume())
             builder.appendWhile(reader, Char::isDecimalDigit)
         }
 
         val token = builder.toString()
-
-        if (token.isEmpty() || token == ".") {
+        if (token == ".") {
             reader.throwTokenError()
         }
 
         val exp = parseExponent()
-
         return if (hasDecimalPoint || exp != null) {
             val factor = exp?.let { EXPONENTIAL_BASE.pow(it) } ?: 1.0
             Token.FloatingPoint(factor * token.toDouble())
@@ -262,34 +285,7 @@ private class StringParser(private val reader: FormatReader) {
         reader.throwTokenError()
     }
 
-    fun parseLiteral(): String {
-        if (!Specification.startsIdentifier(reader.peek()) && reader.peek() != '\\') {
-            reader.throwTokenError()
-        }
-
-        val builder = StringBuilder()
-        while (true) {
-            val char = reader.peekOrNull()
-            if (char == '\\') {
-                reader.consume()
-                if (reader.peekOrNull() != 'u') {
-                    reader.throwTokenError()
-                }
-
-                reader.consume()
-                builder.append(readHexSequence(U_HEX_DIGITS))
-            } else if (char != null && Specification.isIdentifierPart(char)) {
-                builder.append(reader.consume())
-            } else {
-                break
-            }
-        }
-
-        return builder.toString()
-    }
-
     private fun handleStringBackslash(sink: Appendable) {
-        assert(!reader.done)
         reader.consume()
         if (reader.done) {
             reader.throwTokenError()
@@ -310,7 +306,7 @@ private class StringParser(private val reader: FormatReader) {
 
             'x', 'u' -> {
                 reader.consume()
-                sink.append(readHexSequence(if (char == 'u') U_HEX_DIGITS else X_HEX_DIGITS))
+                sink.append(reader.readHexSequence(if (char == 'u') U_HEX_DIGITS else X_HEX_DIGITS))
             }
 
             else ->
@@ -318,18 +314,19 @@ private class StringParser(private val reader: FormatReader) {
         }
     }
 
-    private fun readHexSequence(width: Int): Char {
-        val builder = StringBuilder()
-        repeat(width) {
-            if (reader.done || !reader.peek().isHexDigit()) {
-                reader.throwTokenError()
-            }
+}
 
-            builder.append(reader.consume())
+private fun InputReader.readHexSequence(width: Int): Char {
+    val builder = StringBuilder()
+    repeat(width) {
+        if (done || !peek().isHexDigit()) {
+            throwTokenError()
         }
 
-        return builder.toString().toInt(HEX_BASE).toChar()
+        builder.append(consume())
     }
+
+    return builder.toString().toInt(HEX_BASE).toChar()
 }
 
 private fun StringBuilder.appendWhile(reader: InputReader, predicate: (Char) -> Boolean) {

@@ -272,7 +272,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `duplicate key in top-level map is detected`() {
+    fun `duplicate key in top-level map is reported`() {
         val error = assertFailsWith<DuplicateKeyError> {
             decode<Map<String, Short>>("{ a: 10, a: 10 }")
         }
@@ -378,7 +378,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `unknown class discriminator value is detected`() {
+    fun `unknown class discriminator value is reported`() {
         val error = assertFailsWith<UnexpectedValueError> {
             decode<DefaultInterface>("{ type: 'unknown' }")
         }
@@ -507,7 +507,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `missing field in polymorphic class is detected`() {
+    fun `missing field in polymorphic class is reported`() {
         val error = assertFailsWith<MissingFieldError> {
             decode<DefaultInterface>("{ type: 'flat' }")
         }
@@ -518,7 +518,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `missing class discriminator is detected`() {
+    fun `missing class discriminator is reported`() {
         val error = assertFailsWith<MissingFieldError> {
             decode<DefaultInterface>("{}")
         }
