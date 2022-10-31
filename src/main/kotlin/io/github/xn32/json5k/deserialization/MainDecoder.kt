@@ -91,7 +91,7 @@ internal class MainDecoder(
     override fun decodeChar(): Char {
         val (pos, token) = parser.next().mapType<Token.Str>()
         if (token.string.length != 1) {
-            throw UnexpectedValueError("unexpected multi-character string", pos)
+            throw UnexpectedValueError("single-character string expected", pos)
         }
 
         return token.string[0]
@@ -104,7 +104,7 @@ internal class MainDecoder(
         val index = enumDescriptor.getElementIndex(value)
 
         if (index == CompositeDecoder.UNKNOWN_NAME) {
-            throw UnexpectedValueError("unexpected value '$value' supplied to enumeration", pos)
+            throw UnexpectedValueError("unexpected enum value '$value'", pos)
         }
 
         return index

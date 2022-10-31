@@ -144,18 +144,24 @@ class DeserializationTest {
             decode<DummyEnum>("'UNKNOWN'")
         }
 
-        assertContains(error.message, "unexpected value 'UNKNOWN' supplied to enumeration")
+        assertContains(error.message, "unexpected enum value 'UNKNOWN' at position")
         error.checkPosition(1, 1)
     }
 
     @Test
     fun `length of character variables is checked`() {
-        val error = assertFailsWith<UnexpectedValueError> {
+        val stringError = assertFailsWith<UnexpectedValueError> {
             decode<Char>("'ab'")
         }
 
-        assertContains(error.message, "unexpected multi-character string")
-        error.checkPosition(1, 1)
+        val emptyError = assertFailsWith<UnexpectedValueError> {
+            decode<Char>("''")
+        }
+
+        for (error in listOf(stringError, emptyError)) {
+            assertContains(error.message, "single-character string expected at position")
+            error.checkPosition(1, 1)
+        }
     }
 
     @Test
