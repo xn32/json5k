@@ -2,6 +2,7 @@
 
 [![Build status](https://img.shields.io/github/workflow/status/xn32/json5k/Build)](https://github.com/xn32/json5k/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/xn32/json5k/branch/main/graph/badge.svg?token=PBPA7T92CC)](https://codecov.io/gh/xn32/json5k)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.xn32/json5k)](https://search.maven.org/artifact/io.github.xn32/json5k/)
 [![API documentation](https://img.shields.io/badge/docs-Dokka-informational)](https://xn32.github.io/json5k/api/)
 
 This is an experimental [JSON5](https://json5.org/) library for Kotlin/JVM.
@@ -10,32 +11,14 @@ It makes use of the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.se
 ## Key features
 
 - Compliance with [v1.0.0](https://spec.json5.org/1.0.0/) of the JSON5 specification
-- Support for polymorphic types and configurable class discriminator names
+- Support for polymorphic types and configurable class discriminators
 - Carefully composed error messages for deserialization errors
 - Support for the serialization of comments for class properties
 - Rejection of duplicate keys during deserialization
 
 ## Setup instructions
 
-This repository contains a Gradle setup that compiles the library into a JAR file. Use this file according to your needs.
-
-### Recommended versions
-
-json5k was tested against the following dependencies:
-
-| json5k | Kotlin plugins | Serialization runtime |
-|--------|----------------|-----------------------|
-| v0.2.0 | v1.7.20        | v1.4.1                |
-| v0.1.0 | v1.7.10        | v1.4.0                |
-
-### Usage from Gradle
-
-For evaluation purposes, the easiest solution might be to install the library to your local Maven repository:
-```bash
-./gradlew publishToMavenLocal
-```
-
-Afterwards, use it from `build.gradle.kts` as follows:
+json5k is available on [Maven Central](https://search.maven.org/artifact/io.github.xn32/json5k):
 ```kotlin
 plugins {
     kotlin("jvm") version "1.7.20"
@@ -43,19 +26,13 @@ plugins {
 }
 
 repositories {
-    mavenLocal {
-        content {
-            includeGroup("io.github.xn32")
-        }
-    }
+    mavenCentral()
 }
 
 dependencies {
-    implementation("io.github.xn32:json5k:0.2.0")
+    implementation("io.github.xn32:json5k:0.2.1")
 }
 ```
-
-However, keep the [limitations](https://docs.gradle.org/7.5/userguide/declaring_repositories.html#sub:maven_local) of the local Maven repository in mind.
 
 ## Usage examples
 

@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "io.github.xn32"
-version = "0.2.1-SNAPSHOT"
+version = "0.2.1"
 
 repositories {
     mavenCentral()
@@ -47,6 +47,13 @@ publishing {
                     url.set("https://github.com/xn32/json5k")
                     connection.set("scm:git:git://github.com/xn32/json5k.git")
                     developerConnection.set("scm:git:ssh://git@github.com/xn32/json5k.git")
+                }
+
+                developers {
+                    developer {
+                        id.set("xn32")
+                        url.set("https://github.com/xn32")
+                    }
                 }
 
                 licenses {
