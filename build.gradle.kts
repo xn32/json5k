@@ -9,6 +9,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.7.20"
     `maven-publish`
     `java-library`
+    signing
 }
 
 group = "io.github.xn32"
@@ -27,12 +28,61 @@ tasks.test {
     useJUnitPlatform()
 }
 
+val sonatypeUsername: String? by project
+val sonatypePassword: String? by project
+
+val isReleaseVersion = !version.toString().endsWith("SNAPSHOT")
+
 publishing {
     publications {
-        create<MavenPublication>("lib") {
+        create<MavenPublication>("mavenJava") {
             from(components["java"])
+
+            pom {
+                name.set("json5k")
+                description.set("JSON5 library for Kotlin")
+                url.set("https://github.com/xn32/json5k")
+
+                scm {
+                    url.set("https://github.com/xn32/json5k")
+                    connection.set("scm:git:git://github.com/xn32/json5k.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/xn32/json5k.git")
+                }
+
+                licenses {
+                    license {
+                        name.set("The Apache Software License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+            }
         }
     }
+
+    repositories {
+        maven {
+            url = if (isReleaseVersion) {
+                uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            } else {
+                uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+            }
+
+            credentials {
+                username = sonatypeUsername ?: ""
+                password = sonatypePassword ?: ""
+            }
+        }
+    }
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+signing {
+    isRequired = isReleaseVersion && gradle.taskGraph.hasTask("publish")
+    sign(publishing.publications["mavenJava"])
 }
 
 tasks.withType<KotlinCompile> {
@@ -56,10 +106,8 @@ tasks.withType<DokkaTask>() {
             includes.from("dokka/index.md")
 
             sourceLink {
-                val gradleVersion = version.toString()
-
-                val gitVersion = if (!gradleVersion.contains("SNAPSHOT")) {
-                    "v$gradleVersion"
+                val gitVersion = if (isReleaseVersion) {
+                    "v$version"
                 } else {
                     "main"
                 }
