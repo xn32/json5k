@@ -3,7 +3,7 @@ import java.net.URL
 
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.serialization") // version "1.7.20"
+    kotlin("plugin.serialization")
     id("org.jetbrains.kotlinx.kover") version "0.6.1"
     id("org.jetbrains.dokka") version "1.7.20"
 
@@ -43,10 +43,6 @@ kotlin {
         }
     }
 }
-
-//tasks.withType<GenerateModuleMetadata>().configureEach {
-//    enabled = false
-//}
 
 tasks.withType<DokkaTask>().configureEach {
     val githubRepo = "https://github.com/xn32/json5k"
