@@ -12,6 +12,7 @@ plugins {
 
 group = "io.github.xn32"
 version = "0.3.0-SNAPSHOT"
+
 repositories {
     mavenCentral()
 }
@@ -23,6 +24,7 @@ kotlin {
                 jvmTarget = "1.8"
             }
         }
+
         testRuns.configureEach {
             executionTask.configure {
                 useJUnitPlatform()
@@ -44,7 +46,6 @@ kotlin {
         }
     }
 }
-
 
 val sonatypeUsername: String? by project
 val sonatypePassword: String? by project
@@ -124,8 +125,8 @@ tasks.withType<DokkaTask>().configureEach {
                     "main"
                 }
 
-                localDirectory.set(file("src/main/kotlin"))
-                remoteUrl.set(URL("$githubRepo/blob/$gitVersion/src/main/kotlin"))
+                localDirectory.set(file("src"))
+                remoteUrl.set(URL("$githubRepo/blob/$gitVersion/src"))
                 remoteLineSuffix.set("#L")
             }
         }
