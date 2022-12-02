@@ -11,7 +11,10 @@ plugins {
 }
 
 group = "io.github.xn32"
-version = "0.2.1"
+version = "0.3.0-SNAPSHOT"
+repositories {
+    mavenCentral()
+}
 
 kotlin {
     jvm {
@@ -95,8 +98,7 @@ publishing {
 
 signing {
     isRequired = isReleaseVersion && gradle.taskGraph.hasTask("publish")
-    // TODO updating signing
-//    sign(publishing.publications["mavenJava"])
+    sign(publishing.publications)
 }
 
 tasks.withType<GenerateModuleMetadata>().configureEach {
