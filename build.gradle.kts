@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.xn32"
-version = "0.2.1"
+version = "0.3.0-SNAPSHOT"
 
 kotlin {
     jvm {
@@ -48,11 +48,7 @@ tasks.withType<DokkaTask>().configureEach {
     val githubRepo = "https://github.com/xn32/json5k"
     val footerMsg = "<a href='$githubRepo'>json5k on GitHub</a>"
     val githubUrl = json5kBuildProps.projectVersion { version, isRelease ->
-        val gitVersion = if (isRelease) {
-            "v$version"
-        } else {
-            "main"
-        }
+        val gitVersion = if (isRelease) "v$version" else "main"
         URL("$githubRepo/blob/$gitVersion/src/main/kotlin")
     }
 
