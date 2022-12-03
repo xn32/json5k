@@ -12,7 +12,7 @@ private fun readerFor(stream: InputStream): FormatReader = FormatReader(InputStr
 
 class FormatReaderTest {
     @Test
-    fun `input stream is interpreted as UTF-8`() {
+    fun inputStreamEncoding() {
         val chars = ByteArrayInputStream(intArrayOf(0x0, 0xF0, 0x9F, 0x8E, 0xBC).toByteArray())
         val reader = readerFor(chars)
         assertEquals("\u0000\ud83c\udfbc", reader.consumeAll())

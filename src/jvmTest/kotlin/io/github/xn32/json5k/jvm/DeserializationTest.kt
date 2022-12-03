@@ -11,7 +11,7 @@ import kotlin.test.assertNull
 
 class DeserializationTest {
     @Test
-    fun `stream deserialization works`() {
+    fun basicStreamSerialization() {
         val str = "null"
         val num = str.byteInputStream().use {
             Json5.decodeFromStream<Int?>(it)
@@ -21,7 +21,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `input stream is read to the end`() {
+    fun streamReadToEnd() {
         val str = "{}x"
         str.byteInputStream().use {
             val error = assertFailsWith<CharError> {
