@@ -2,12 +2,10 @@ package io.github.xn32.json5k.binding
 
 import io.github.xn32.json5k.Json5
 import io.github.xn32.json5k.SerialComment
-import io.github.xn32.json5k.encodeToStream
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
-import java.io.ByteArrayOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -277,17 +275,6 @@ class SerializationTest {
     }
 
     @Test
-    fun `stream serialization works`() {
-        val stream = ByteArrayOutputStream()
-        val str = stream.use {
-            Json5.encodeToStream(20, it)
-            it.toString("UTF-8")
-        }
-
-        assertEquals("20", str)
-    }
-
-    @Test
     fun `serial comments are trimmed and added to pretty-print output`() {
         val json5 = Json5 {
             prettyPrint = true
@@ -330,22 +317,5 @@ class SerializationTest {
         }
 
         assertEquals("\"0xff0000\"", json5.encodeToString(Color(0xff0000)))
-    }
-
-    @Test
-    fun `generation of native line terminators is possible`() {
-        val json5 = Json5 {
-            prettyPrint = true
-            nativeLineTerminators = true
-        }
-
-        assertEquals(
-            """
-                {
-                    obj: 10
-                }
-            """.trimIndent().replace("\n", System.lineSeparator()),
-            json5.encodeToString(Wrapper(10))
-        )
     }
 }

@@ -5,17 +5,39 @@ import io.github.xn32.json5k.format.DocumentTracker
 import io.github.xn32.json5k.format.DocumentTracker.TokenType
 import io.github.xn32.json5k.format.Specification
 import io.github.xn32.json5k.format.Token
-import java.io.BufferedWriter
-import java.io.Flushable
 import java.io.OutputStream
-import java.io.Writer
 
 private const val INDENT_CHAR = ' '
 private const val LINE_TERMINATOR = "\n"
 private val LINE_DELIMITERS = arrayOf("\r\n") + Specification.LINE_TERMINATORS.map(Char::toString)
 
-internal class FormatGenerator(stream: OutputStream, private val outputStrategy: OutputStrategy) : Flushable {
-    private val writer: BufferedWriter = stream.bufferedWriter(Charsets.UTF_8)
+internal interface OutputSink {
+    fun write(char: Char)
+    fun finalize() {}
+}
+
+internal class StringOutputSink : OutputSink {
+    private val builder = StringBuilder()
+
+    override fun write(char: Char) {
+        builder.append(char)
+    }
+
+    override fun toString() = builder.toString()
+}
+
+internal class OutputStreamSink(stream: OutputStream) : OutputSink {
+    private val writer = stream.bufferedWriter()
+    override fun write(char: Char) {
+        writer.append(char)
+    }
+
+    override fun finalize() {
+        writer.flush()
+    }
+}
+
+internal class FormatGenerator(private val sink: OutputSink, private val outputStrategy: OutputStrategy) {
     private val tracker = DocumentTracker()
 
     fun put(token: Token) {
@@ -37,17 +59,17 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
         @Suppress("SpreadOperator")
         for (line in comment.splitToSequence(*LINE_DELIMITERS)) {
             writeVisualSep()
-            writer.append("// $line")
+            sink.write("// $line")
         }
     }
 
     private fun writeComma() {
-        writer.append(',')
+        sink.write(',')
         tracker.supplyComma()
     }
 
     private fun writeQuoted(sequence: CharSequence) {
-        writer.appendQuoted(outputStrategy.quoteCharacter, sequence)
+        sink.writeQuoted(outputStrategy.quoteCharacter, sequence)
     }
 
     private fun writeVisualSep(levelOffset: Int = 0) {
@@ -55,14 +77,9 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
             return
         }
 
-        if (outputStrategy.nativeLineTerminators) {
-            writer.newLine()
-        } else {
-            writer.write(LINE_TERMINATOR)
-        }
-
+        sink.write(LINE_TERMINATOR)
         repeat(outputStrategy.indentationWith * (tracker.nestingLevel + levelOffset)) {
-            writer.write(INDENT_CHAR.code)
+            sink.write(INDENT_CHAR)
         }
     }
 
@@ -84,7 +101,7 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
             writeComma()
 
             if (token is Token.BeginToken && outputStrategy is OutputStrategy.HumanReadable) {
-                writer.append(' ')
+                sink.write(' ')
             } else if (token !is Token.BeginToken) {
                 writeVisualSep()
             }
@@ -93,7 +110,6 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
         when (tracker.nextTokenType) {
             TokenType.END_OF_FILE -> {
                 require(token is Token.EndOfFile)
-                writer.flush()
             }
 
             TokenType.NEXT_ITEM, TokenType.COMMA -> {
@@ -113,15 +129,15 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
 
     private fun handleEndToken(token: Token.EndToken) {
         when (token) {
-            Token.EndObject -> writer.append('}')
-            Token.EndArray -> writer.append(']')
+            Token.EndObject -> sink.write('}')
+            Token.EndArray -> sink.write(']')
         }
     }
 
     private fun handleBeginToken(token: Token.BeginToken) {
         when (token) {
-            Token.BeginObject -> writer.append('{')
-            Token.BeginArray -> writer.append('[')
+            Token.BeginObject -> sink.write('{')
+            Token.BeginArray -> sink.write('[')
         }
     }
 
@@ -131,12 +147,12 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
         if (!Specification.isIdentifier(name) || outputStrategy.quoteMemberNames) {
             writeQuoted(name)
         } else {
-            writer.append(token.name)
+            sink.write(token.name)
         }
 
-        writer.append(':')
+        sink.write(':')
         if (outputStrategy is OutputStrategy.HumanReadable) {
-            writer.append(' ')
+            sink.write(' ')
         }
     }
 
@@ -150,39 +166,41 @@ internal class FormatGenerator(stream: OutputStream, private val outputStrategy:
 
     private fun putValue(token: Token.Value) {
         when (token) {
-            is Token.Bool -> writer.append(token.bool.toString())
-            Token.Null -> writer.append("null")
-            is Token.FloatingPoint -> writer.append(token.number.toString())
-            is Token.SignedInteger -> writer.append(token.number.toString())
-            is Token.UnsignedInteger -> writer.append(token.number.toString())
+            is Token.Bool -> sink.write(token.bool.toString())
+            Token.Null -> sink.write("null")
+            is Token.FloatingPoint -> sink.write(token.number.toString())
+            is Token.SignedInteger -> sink.write(token.number.toString())
+            is Token.UnsignedInteger -> sink.write(token.number.toString())
             is Token.Str -> writeQuoted(token.string)
         }
     }
+}
 
-    override fun flush() {
-        writer.flush()
+private fun OutputSink.write(sequence: CharSequence) {
+    for (char in sequence) {
+        write(char)
     }
 }
 
-private fun Writer.appendEscaped(char: Char) {
-    append("\\$char")
+private fun OutputSink.writeEscaped(char: Char) {
+    write("\\$char")
 }
 
-private fun Writer.appendQuoted(quoteChar: Char, sequence: CharSequence) {
-    append(quoteChar)
+private fun OutputSink.writeQuoted(quoteChar: Char, sequence: CharSequence) {
+    write(quoteChar)
     for (char in sequence) {
         when (char) {
-            quoteChar, '\\' -> appendEscaped(char)
+            quoteChar, '\\' -> writeEscaped(char)
             in Specification.LINE_TERMINATORS -> {
                 when (val ctrl = Specification.REVERSE_ESCAPE_CHAR_MAP[char]) {
-                    is Char -> appendEscaped(ctrl)
-                    else -> append("\\u${"%04x".format(char.code)}")
+                    is Char -> writeEscaped(ctrl)
+                    else -> write("\\u${"%04x".format(char.code)}")
                 }
             }
 
-            else -> append(char)
+            else -> write(char)
         }
     }
 
-    append(quoteChar)
+    write(quoteChar)
 }

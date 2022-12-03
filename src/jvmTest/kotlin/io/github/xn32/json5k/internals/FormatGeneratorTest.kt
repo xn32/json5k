@@ -3,18 +3,16 @@ package io.github.xn32.json5k.internals
 import io.github.xn32.json5k.OutputStrategy
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.generation.FormatGenerator
-import java.io.ByteArrayOutputStream
+import io.github.xn32.json5k.generation.StringOutputSink
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 private fun newHumanReadableStrategy(
     indentationWidth: Int = 4,
-    nativeLineTerminators: Boolean = false,
     quoteCharacter: Char = '"',
     quoteMemberNames: Boolean = false,
 ) = OutputStrategy.HumanReadable(
     indentationWidth,
-    nativeLineTerminators,
     quoteCharacter,
     quoteMemberNames
 )
@@ -361,9 +359,10 @@ class FormatGeneratorTest {
     }
 }
 
-private fun generate(strategy: OutputStrategy, block: FormatGenerator.() -> Unit) = ByteArrayOutputStream().use {
-    val writer = FormatGenerator(it, strategy)
+private fun generate(strategy: OutputStrategy, block: FormatGenerator.() -> Unit): String {
+    val sink = StringOutputSink()
+    val writer = FormatGenerator(sink, strategy)
     writer.apply(block)
     writer.put(Token.EndOfFile)
-    it.toString("UTF-8")
+    return sink.toString()
 }

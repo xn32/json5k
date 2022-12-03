@@ -36,12 +36,6 @@ class ConfigBuilder {
     var indentationWidth: Int = 4
 
     /**
-     * Use the native line terminator (instead of LF) when generating human-readable output. This setting
-     * has an effect only if the [prettyPrint] option is activated.
-     */
-    var nativeLineTerminators: Boolean = false
-
-    /**
      * Request names of serialized object members to be quoted even if the quotation marks could be dropped.
      * This setting has an effect only if the [prettyPrint] option is activated. If compressed single-line
      * output is generated, member names will be quoted only when necessary.
@@ -70,7 +64,6 @@ internal sealed interface OutputStrategy {
 
     data class HumanReadable(
         val indentationWith: Int,
-        val nativeLineTerminators: Boolean,
         override val quoteCharacter: Char,
         override val quoteMemberNames: Boolean,
     ) : OutputStrategy
@@ -86,7 +79,6 @@ internal fun ConfigBuilder.toSettings(): Settings = Settings(
         require(indentationWidth > 0)
         OutputStrategy.HumanReadable(
             indentationWith = indentationWidth,
-            nativeLineTerminators = nativeLineTerminators,
             quoteCharacter = if (useSingleQuotes) SINGLE_QUOTE else DOUBLE_QUOTE,
             quoteMemberNames = quoteMemberNames,
         )

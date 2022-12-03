@@ -10,14 +10,14 @@ import io.github.xn32.json5k.checkPosition
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.parsing.FormatParser
 import io.github.xn32.json5k.parsing.Parser
-import io.github.xn32.json5k.parsing.StringSource
+import io.github.xn32.json5k.parsing.StringInputSource
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 
-private fun parserFor(str: String): FormatParser = FormatParser(StringSource(str))
+private fun parserFor(str: String): FormatParser = FormatParser(StringInputSource(str))
 
 class FormatParserTest {
     @Test

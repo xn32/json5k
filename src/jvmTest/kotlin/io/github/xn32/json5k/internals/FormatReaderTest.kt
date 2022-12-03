@@ -4,7 +4,7 @@ import io.github.xn32.json5k.EndOfFileError
 import io.github.xn32.json5k.checkPosition
 import io.github.xn32.json5k.parsing.FormatReader
 import io.github.xn32.json5k.parsing.InputStreamSource
-import io.github.xn32.json5k.parsing.StringSource
+import io.github.xn32.json5k.parsing.StringInputSource
 import io.github.xn32.json5k.parsing.consumeAll
 import io.github.xn32.json5k.parsing.consumeOrNull
 import io.github.xn32.json5k.parsing.consumeWhile
@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
 private const val SAMPLE_INPUT = "abc/def"
 
 private fun readerFor(stream: InputStream): FormatReader = FormatReader(InputStreamSource(stream))
-private fun readerFor(str: String): FormatReader = FormatReader(StringSource(str))
+private fun readerFor(str: String): FormatReader = FormatReader(StringInputSource(str))
 
 class FormatReaderTest {
     @Test

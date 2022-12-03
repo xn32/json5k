@@ -3,11 +3,14 @@ package io.github.xn32.json5k
 import io.github.xn32.json5k.deserialization.MainDecoder
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.generation.FormatGenerator
+import io.github.xn32.json5k.generation.OutputSink
+import io.github.xn32.json5k.generation.OutputStreamSink
+import io.github.xn32.json5k.generation.StringOutputSink
 import io.github.xn32.json5k.parsing.FormatParser
 import io.github.xn32.json5k.parsing.InjectableLookaheadParser
 import io.github.xn32.json5k.parsing.InputSource
 import io.github.xn32.json5k.parsing.InputStreamSource
-import io.github.xn32.json5k.parsing.StringSource
+import io.github.xn32.json5k.parsing.StringInputSource
 import io.github.xn32.json5k.serialization.MainEncoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -20,7 +23,6 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -54,8 +56,8 @@ interface Json5 : StringFormat {
     /**
      * Serializes the given [value] using the provided [serializer] and returns the value as a string.
      *
-     * Depending on the value of [ConfigBuilder.nativeLineTerminators], the function will use UNIX-style or native
-     * line endings. A final newline character is *not* generated.
+     * If human-readable output is requested, the function will use UNIX-style line endings.
+     * A final newline character is *not* generated.
      *
      * @param serializer [SerializationStrategy] to use for the serialization.
      * @param value The object hierarchy to serialize.
@@ -80,8 +82,8 @@ interface Json5 : StringFormat {
      *
      * Data written to [outputStream] will have UTF-8 encoding. It is not closed upon completion of this operation.
      *
-     * Depending on the value of [ConfigBuilder.nativeLineTerminators], the function will use UNIX-style or native
-     * line endings. A final newline character is *not* generated.
+     * If human-readable output is requested, the function will use UNIX-style line endings.
+     * A final newline character is *not* generated.
      *
      * @param serializer [SerializationStrategy] to use for the serialization.
      * @param value The object hierarchy to serialize.
@@ -176,6 +178,7 @@ private class Json5Impl(
     override val serializersModule: SerializersModule,
     val settings: Settings,
 ) : Json5 {
+
     private fun <T> decode(deserializer: DeserializationStrategy<T>, reader: InputSource): T {
         val parser = InjectableLookaheadParser(FormatParser(reader))
         val res = MainDecoder(serializersModule, parser, settings).decodeSerializableValue(deserializer)
@@ -183,24 +186,29 @@ private class Json5Impl(
         return res
     }
 
+    private fun <T> encode(serializer: SerializationStrategy<T>, value: T, sink: OutputSink) {
+        val generator = FormatGenerator(sink, settings.outputStrategy)
+        MainEncoder(serializersModule, generator, settings).encodeSerializableValue(serializer, value)
+        generator.put(Token.EndOfFile)
+        sink.finalize()
+    }
+
     override fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, inputStream: InputStream): T {
         return decode(deserializer, InputStreamSource(inputStream))
     }
 
     override fun <T> decodeFromString(deserializer: DeserializationStrategy<T>, string: String): T {
-        return decode(deserializer, StringSource(string))
+        return decode(deserializer, StringInputSource(string))
     }
 
     override fun <T> encodeToStream(serializer: SerializationStrategy<T>, value: T, outputStream: OutputStream) {
-        val generator = FormatGenerator(outputStream, settings.outputStrategy)
-        MainEncoder(serializersModule, generator, settings).encodeSerializableValue(serializer, value)
-        generator.put(Token.EndOfFile)
+        encode(serializer, value, OutputStreamSink(outputStream))
     }
 
     override fun <T> encodeToString(serializer: SerializationStrategy<T>, value: T): String {
-        val stream = ByteArrayOutputStream()
-        encodeToStream(serializer, value, stream)
-        return stream.toString("UTF-8")
+        val sink = StringOutputSink()
+        encode(serializer, value, sink)
+        return sink.toString()
     }
 }
 

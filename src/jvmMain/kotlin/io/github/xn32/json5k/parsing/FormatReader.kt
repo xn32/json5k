@@ -10,7 +10,7 @@ internal interface InputSource {
     val done: Boolean
 }
 
-internal class StringSource(private val str: String) : InputSource {
+internal class StringInputSource(private val str: String) : InputSource {
     private var pos = 0
 
     override fun peek(): Char = str[pos]
