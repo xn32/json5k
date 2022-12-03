@@ -5,6 +5,9 @@ import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.generation.FormatGenerator
 import io.github.xn32.json5k.parsing.FormatParser
 import io.github.xn32.json5k.parsing.InjectableLookaheadParser
+import io.github.xn32.json5k.parsing.InputSource
+import io.github.xn32.json5k.parsing.InputStreamSource
+import io.github.xn32.json5k.parsing.StringSource
 import io.github.xn32.json5k.serialization.MainEncoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -173,22 +176,25 @@ private class Json5Impl(
     override val serializersModule: SerializersModule,
     val settings: Settings,
 ) : Json5 {
-    override fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, inputStream: InputStream): T {
-        val parser = InjectableLookaheadParser(FormatParser(inputStream))
+    private fun <T> decode(deserializer: DeserializationStrategy<T>, reader: InputSource): T {
+        val parser = InjectableLookaheadParser(FormatParser(reader))
         val res = MainDecoder(serializersModule, parser, settings).decodeSerializableValue(deserializer)
         parser.next()
         return res
+    }
+
+    override fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, inputStream: InputStream): T {
+        return decode(deserializer, InputStreamSource(inputStream))
+    }
+
+    override fun <T> decodeFromString(deserializer: DeserializationStrategy<T>, string: String): T {
+        return decode(deserializer, StringSource(string))
     }
 
     override fun <T> encodeToStream(serializer: SerializationStrategy<T>, value: T, outputStream: OutputStream) {
         val generator = FormatGenerator(outputStream, settings.outputStrategy)
         MainEncoder(serializersModule, generator, settings).encodeSerializableValue(serializer, value)
         generator.put(Token.EndOfFile)
-    }
-
-    override fun <T> decodeFromString(deserializer: DeserializationStrategy<T>, string: String): T {
-        val stream = string.byteInputStream()
-        return decodeFromStream(deserializer, stream)
     }
 
     override fun <T> encodeToString(serializer: SerializationStrategy<T>, value: T): String {

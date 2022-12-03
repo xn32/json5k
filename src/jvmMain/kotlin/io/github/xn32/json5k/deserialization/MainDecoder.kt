@@ -8,7 +8,7 @@ import io.github.xn32.json5k.isUnsignedNumber
 import io.github.xn32.json5k.parsing.InjectableLookaheadParser
 import io.github.xn32.json5k.parsing.LookaheadParser
 import io.github.xn32.json5k.parsing.Parser
-import io.github.xn32.json5k.parsing.ReaderPosition
+import io.github.xn32.json5k.parsing.LinePosition
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
@@ -26,7 +26,7 @@ internal class MainDecoder(
     val parser: InjectableLookaheadParser<Token>,
     val settings: Settings,
 ) : Decoder {
-    private var beginPos: ReaderPosition? = null
+    private var beginPos: LinePosition? = null
     private var polymorphicDecoder: PolymorphicDecoder? = null
 
     constructor(other: MainDecoder) : this(other.serializersModule, other.parser, other.settings)

@@ -8,9 +8,6 @@ import io.github.xn32.json5k.UnexpectedValueError
 import io.github.xn32.json5k.UnknownKeyError
 import io.github.xn32.json5k.checkPosition
 import io.github.xn32.json5k.decodeFromStream
-import io.github.xn32.json5k.deserialization.mapType
-import io.github.xn32.json5k.format.Token
-import io.github.xn32.json5k.parserFor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.modules.SerializersModule
@@ -214,17 +211,11 @@ class DeserializationTest {
             decode<Wrapper<String>>("{ obj: [1, 2] }")
         }
 
-        val unknownError = assertFailsWith<UnexpectedValueError> {
-            val tokenEvent = parserFor("10").next()
-            tokenEvent.mapType<Token.Null>()
-        }
-
         assertContains(intError.message, "integer expected at position")
         assertContains(unsignedIntError.message, "unsigned integer expected at position")
         assertContains(floatError.message, "floating-point number expected at position")
         assertContains(boolError.message, "boolean value expected at position")
         assertContains(stringError.message, "string literal expected at position")
-        assertContains(unknownError.message, "unexpected value at position")
 
         for (error in listOf(intError, floatError, boolError, stringError)) {
             error.checkPosition(1, 8)

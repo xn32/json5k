@@ -3,17 +3,38 @@ package io.github.xn32.json5k.parsing
 import io.github.xn32.json5k.LiteralError
 import io.github.xn32.json5k.OverflowError
 import io.github.xn32.json5k.format.DocumentTracker
-import io.github.xn32.json5k.format.DocumentTracker.TokenType
 import io.github.xn32.json5k.format.Specification
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.isDecimalDigit
 import io.github.xn32.json5k.isHexDigit
 import io.github.xn32.json5k.throwTokenError
-import java.io.InputStream
 import kotlin.math.pow
 
-internal class FormatParser(stream: InputStream) : Parser<Token> {
-    private val reader: FormatReader = FormatReader(stream)
+internal data class Event<out T>(
+    val pos: LinePosition,
+    val item: T,
+)
+
+internal interface Parser<out T> {
+    fun next(): Event<T>
+}
+
+internal interface LookaheadParser<out T> : Parser<T> {
+    fun peek(): Event<T>
+}
+
+internal class InjectableLookaheadParser<T>(private val parser: Parser<T>) : LookaheadParser<T> {
+    private val buffer: MutableList<Event<T>> = mutableListOf()
+
+    fun prepend(event: Event<T>) = buffer.add(0, event)
+    fun prepend(events: List<Event<T>>) = buffer.addAll(0, events)
+
+    override fun next(): Event<T> = buffer.removeFirstOrNull() ?: parser.next()
+    override fun peek(): Event<T> = buffer.firstOrNull() ?: parser.next().also { buffer.add(it) }
+}
+
+internal class FormatParser(streamReader: InputSource) : Parser<Token> {
+    private val reader: FormatReader = FormatReader(streamReader)
 
     private val stringParser = StringParser(reader)
     private val numParser = NumParser(reader)
@@ -30,7 +51,7 @@ internal class FormatParser(stream: InputStream) : Parser<Token> {
 
     private fun advanceToPrimaryToken() {
         reader.advance()
-        if (tracker.nextTokenType == TokenType.COMMA && reader.peekOrNull() == ',') {
+        if (tracker.nextTokenType == DocumentTracker.TokenType.COMMA && reader.peekOrNull() == ',') {
             reader.consume()
             tracker.supplyComma()
             reader.advance()
@@ -42,9 +63,9 @@ internal class FormatParser(stream: InputStream) : Parser<Token> {
         val structCloserPending = (next == '}' || next == ']')
 
         return when (tracker.nextTokenType) {
-            TokenType.MEMBER_VALUE -> parseValue()
+            DocumentTracker.TokenType.MEMBER_VALUE -> parseValue()
 
-            TokenType.NEXT_ITEM -> {
+            DocumentTracker.TokenType.NEXT_ITEM -> {
                 if (tracker.inStruct && structCloserPending) {
                     parseStructCloser()
                 } else if (tracker.inObjectStruct) {
@@ -54,7 +75,7 @@ internal class FormatParser(stream: InputStream) : Parser<Token> {
                 }
             }
 
-            TokenType.COMMA -> {
+            DocumentTracker.TokenType.COMMA -> {
                 if (structCloserPending) {
                     parseStructCloser()
                 } else {
@@ -62,7 +83,7 @@ internal class FormatParser(stream: InputStream) : Parser<Token> {
                 }
             }
 
-            TokenType.END_OF_FILE -> {
+            DocumentTracker.TokenType.END_OF_FILE -> {
                 if (next == null) {
                     Token.EndOfFile
                 } else {
@@ -156,7 +177,7 @@ internal class FormatParser(stream: InputStream) : Parser<Token> {
     }
 }
 
-private fun InputReader.readOptionalSign(): Sign {
+private fun SourceReader.readOptionalSign(): Sign {
     return when (peekOrNull()) {
         '+' -> Sign.PLUS
         '-' -> Sign.MINUS
@@ -209,7 +230,7 @@ private class NumParser(private val reader: FormatReader) {
         return numLiteralOf(letters) ?: throw LiteralError(letters, pos)
     }
 
-    private fun parseHexNumber(startPos: ReaderPosition): Token.Num {
+    private fun parseHexNumber(startPos: LinePosition): Token.Num {
         reader.consume()
         val hexString = reader.readHexString()
         if (hexString.isEmpty()) {
@@ -313,10 +334,9 @@ private class StringParser(private val reader: FormatReader) {
                 sink.append(reader.consume())
         }
     }
-
 }
 
-private fun InputReader.readHexSequence(width: Int): Char {
+private fun SourceReader.readHexSequence(width: Int): Char {
     val builder = StringBuilder()
     repeat(width) {
         if (done || !peek().isHexDigit()) {
@@ -329,7 +349,7 @@ private fun InputReader.readHexSequence(width: Int): Char {
     return builder.toString().toInt(HEX_BASE).toChar()
 }
 
-private fun StringBuilder.appendWhile(reader: InputReader, predicate: (Char) -> Boolean) {
+private fun StringBuilder.appendWhile(reader: SourceReader, predicate: (Char) -> Boolean) {
     while (true) {
         val next = reader.peekOrNull()
 
@@ -356,10 +376,9 @@ private fun miscLiteralOf(letters: String): Token.Value? = when (letters) {
 
 private const val EXPONENTIAL_BASE = 10.0
 private const val HEX_BASE = 16
-
 private const val U_HEX_DIGITS = 4
 private const val X_HEX_DIGITS = 2
 
 private enum class Sign { PLUS, MINUS }
 
-private fun InputReader.readHexString(): String = consumeWhile(Char::isHexDigit)
+private fun SourceReader.readHexString(): String = consumeWhile(Char::isHexDigit)
