@@ -74,20 +74,27 @@ class FormatGeneratorTest {
             put(Token.FloatingPoint(-2e-10))
         })
 
-
-        assertEquals("2.44467e-10", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(2.44467e-10))
+        assertEquals("9.9e-7", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(0.99e-6))
         })
     }
 
     @Test
     fun miscFloatingPointNumber() {
-        assertEquals("55.0", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(55.0))
+        assertEquals("0.0", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(0.0))
         })
 
-        assertEquals("-999999999.999", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(-9.99999999999e8))
+        assertEquals("999999999.0", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(0.999999999e9))
+        })
+
+        assertEquals("-0.1123", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(-0.1123))
+        })
+
+        assertEquals("0.000001", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(1e-6))
         })
     }
 

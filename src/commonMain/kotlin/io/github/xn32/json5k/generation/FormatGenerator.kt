@@ -206,7 +206,7 @@ fun Double.toFormatString(): String {
         "Infinity"
     } else {
         val large = absoluteValue >= 1e9
-        val small = absoluteValue != 0.0 && absoluteValue <= 1e-9
+        val small = absoluteValue != 0.0 && absoluteValue < 1e-6
 
         if (large || small) {
             absoluteValue.toScientificString()
