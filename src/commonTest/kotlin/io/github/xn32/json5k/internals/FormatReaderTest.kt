@@ -3,14 +3,11 @@ package io.github.xn32.json5k.internals
 import io.github.xn32.json5k.EndOfFileError
 import io.github.xn32.json5k.checkPosition
 import io.github.xn32.json5k.parsing.FormatReader
-import io.github.xn32.json5k.parsing.InputStreamSource
 import io.github.xn32.json5k.parsing.StringInputSource
 import io.github.xn32.json5k.parsing.consumeAll
 import io.github.xn32.json5k.parsing.consumeOrNull
 import io.github.xn32.json5k.parsing.consumeWhile
 import io.github.xn32.json5k.parsing.peekOrNull
-import java.io.ByteArrayInputStream
-import java.io.InputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -20,17 +17,9 @@ import kotlin.test.assertTrue
 
 private const val SAMPLE_INPUT = "abc/def"
 
-private fun readerFor(stream: InputStream): FormatReader = FormatReader(InputStreamSource(stream))
 private fun readerFor(str: String): FormatReader = FormatReader(StringInputSource(str))
 
 class FormatReaderTest {
-    @Test
-    fun `input stream is interpreted as UTF-8`() {
-        val chars = ByteArrayInputStream(intArrayOf(0x0, 0xF0, 0x9F, 0x8E, 0xBC).toByteArray())
-        val reader = readerFor(chars)
-        assertEquals("\u0000\ud83c\udfbc", reader.consumeAll())
-    }
-
     @Test
     fun `input sequence is consumed correctly`() {
         val reader = readerFor(SAMPLE_INPUT)
@@ -134,5 +123,3 @@ class FormatReaderTest {
         reader.checkPosition(2, 1)
     }
 }
-
-private fun IntArray.toByteArray(): ByteArray = map(Int::toByte).toByteArray()

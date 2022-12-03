@@ -5,7 +5,7 @@ import io.github.xn32.json5k.format.DocumentTracker
 import io.github.xn32.json5k.format.DocumentTracker.TokenType
 import io.github.xn32.json5k.format.Specification
 import io.github.xn32.json5k.format.Token
-import java.io.OutputStream
+import io.github.xn32.json5k.toHexString
 
 private const val INDENT_CHAR = ' '
 private const val LINE_TERMINATOR = "\n"
@@ -26,16 +26,6 @@ internal class StringOutputSink : OutputSink {
     override fun toString() = builder.toString()
 }
 
-internal class OutputStreamSink(stream: OutputStream) : OutputSink {
-    private val writer = stream.bufferedWriter()
-    override fun write(char: Char) {
-        writer.append(char)
-    }
-
-    override fun finalize() {
-        writer.flush()
-    }
-}
 
 internal class FormatGenerator(private val sink: OutputSink, private val outputStrategy: OutputStrategy) {
     private val tracker = DocumentTracker()
@@ -194,7 +184,7 @@ private fun OutputSink.writeQuoted(quoteChar: Char, sequence: CharSequence) {
             in Specification.LINE_TERMINATORS -> {
                 when (val ctrl = Specification.REVERSE_ESCAPE_CHAR_MAP[char]) {
                     is Char -> writeEscaped(ctrl)
-                    else -> write("\\u${"%04x".format(char.code)}")
+                    else -> write("\\u${char.toHexString()}")
                 }
             }
 

@@ -5,6 +5,8 @@ internal fun Char.isUnicodeOther(): Boolean = this.category in UNICODE_OTHER_CAT
 internal fun Char.isHexDigit(): Boolean = this in DECIMAL_DIGITS || this.lowercaseChar() in HEX_LETTERS
 internal fun Char.isDecimalDigit(): Boolean = this in DECIMAL_DIGITS
 
+internal fun Char.toHexString(): String = code.toString(16).padStart(4, '0').uppercase()
+
 private val DECIMAL_DIGITS = '0'..'9'
 private val HEX_LETTERS = 'a'..'f'
 

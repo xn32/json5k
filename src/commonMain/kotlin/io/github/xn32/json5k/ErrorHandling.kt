@@ -84,7 +84,7 @@ class UnexpectedValueError internal constructor(baseMsg: String, pos: LinePositi
     DecodingError(baseMsg, pos)
 
 private fun Char.display(): String = if (isUnicodeOther()) {
-    Specification.REVERSE_ESCAPE_CHAR_MAP[this]?.let { "\\$it" } ?: "U+${"%04X".format(code)}"
+    Specification.REVERSE_ESCAPE_CHAR_MAP[this]?.let { "\\$it" } ?: "U+${toHexString()}"
 } else {
     toString()
 }

@@ -4,12 +4,10 @@ import io.github.xn32.json5k.deserialization.MainDecoder
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.generation.FormatGenerator
 import io.github.xn32.json5k.generation.OutputSink
-import io.github.xn32.json5k.generation.OutputStreamSink
 import io.github.xn32.json5k.generation.StringOutputSink
 import io.github.xn32.json5k.parsing.FormatParser
 import io.github.xn32.json5k.parsing.InjectableLookaheadParser
 import io.github.xn32.json5k.parsing.InputSource
-import io.github.xn32.json5k.parsing.InputStreamSource
 import io.github.xn32.json5k.parsing.StringInputSource
 import io.github.xn32.json5k.serialization.MainEncoder
 import kotlinx.serialization.DeserializationStrategy
@@ -22,10 +20,6 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.serializer
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 
 /**
  * Main interface to serialize a given object hierarchy to JSON5 or vice versa.
@@ -42,7 +36,16 @@ import java.io.OutputStream
  * A custom instance is obtained by calling the builder function and populating the
  * associated [ConfigBuilder] object with the desired configuration options.
  */
-interface Json5 : StringFormat {
+sealed class Json5 constructor(
+    override val serializersModule: SerializersModule,
+    private val settings: Settings
+) : StringFormat {
+
+    constructor(builder: ConfigBuilder) : this(
+        serializersModule = builder.serializersModule ?: EmptySerializersModule(),
+        settings = builder.toSettings()
+    )
+
     /**
      * This companion object is the default implementation of the [Json5] interface.
      *
@@ -51,7 +54,7 @@ interface Json5 : StringFormat {
      * polymorphic types. During the serialization process, it does not encode default values
      * and generates compressed output (without line breaks for better readability).
      */
-    companion object Default : Json5 by ConfigBuilder().toImpl()
+    companion object Default : Json5(ConfigBuilder())
 
     /**
      * Serializes the given [value] using the provided [serializer] and returns the value as a string.
@@ -63,7 +66,12 @@ interface Json5 : StringFormat {
      * @param value The object hierarchy to serialize.
      * @return The generated JSON5 output.
      */
-    override fun <T> encodeToString(serializer: SerializationStrategy<T>, value: T): String
+    override fun <T> encodeToString(serializer: SerializationStrategy<T>, value: T): String {
+        val sink = StringOutputSink()
+        encode(serializer, value, sink)
+        return sink.toString()
+
+    }
 
     /**
      * Deserializes the JSON5 input in [string] using the given [deserializer] and returns
@@ -75,37 +83,24 @@ interface Json5 : StringFormat {
      * @throws DecodingError The provided input is incompatible with the data model.
      * @return The created object hierarchy.
      */
-    override fun <T> decodeFromString(deserializer: DeserializationStrategy<T>, string: String): T
+    override fun <T> decodeFromString(deserializer: DeserializationStrategy<T>, string: String): T {
+        return decode(deserializer, StringInputSource(string))
+    }
 
-    /**
-     * Serializes the given [value] using the given [serializer] and writes the result to [outputStream].
-     *
-     * Data written to [outputStream] will have UTF-8 encoding. It is not closed upon completion of this operation.
-     *
-     * If human-readable output is requested, the function will use UNIX-style line endings.
-     * A final newline character is *not* generated.
-     *
-     * @param serializer [SerializationStrategy] to use for the serialization.
-     * @param value The object hierarchy to serialize.
-     * @param outputStream [OutputStream] to write the UTF-8 result to.
-     * @throws IOException An error occurred while writing to [outputStream].
-     */
-    fun <T> encodeToStream(serializer: SerializationStrategy<T>, value: T, outputStream: OutputStream)
+    internal fun <T> decode(deserializer: DeserializationStrategy<T>, reader: InputSource): T {
+        val parser = InjectableLookaheadParser(FormatParser(reader))
+        val res = MainDecoder(serializersModule, parser, settings).decodeSerializableValue(deserializer)
+        parser.next()
+        return res
+    }
 
-    /**
-     * Deserializes the JSON5 input from [inputStream] using the given [deserializer] and
-     * returns an equivalent object hierarchy.
-     *
-     * Data read from the [InputStream] is expected to have UTF-8 encoding.
-     *
-     * @param deserializer [DeserializationStrategy] to use for the deserialization.
-     * @param inputStream UTF-8-encoded stream to read the JSON5 input from.
-     * @throws ParsingError The provided input cannot be parsed.
-     * @throws DecodingError The provided input is incompatible with the data model.
-     * @throws IOException An error occurred while reading from [inputStream].
-     * @return The created object hierarchy.
-     */
-    fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, inputStream: InputStream): T
+    internal fun <T> encode(serializer: SerializationStrategy<T>, value: T, sink: OutputSink) {
+        val generator = FormatGenerator(sink, settings.outputStrategy)
+        MainEncoder(serializersModule, generator, settings).encodeSerializableValue(serializer, value)
+        generator.put(Token.EndOfFile)
+        sink.finalize()
+    }
+
 }
 
 /**
@@ -130,8 +125,10 @@ interface Json5 : StringFormat {
 fun Json5(actions: ConfigBuilder.() -> Unit): Json5 {
     val builder = ConfigBuilder()
     builder.actions()
-    return builder.toImpl()
+    return Json5Impl(builder)
 }
+
+private class Json5Impl(builder: ConfigBuilder) : Json5(builder)
 
 /**
  * Annotation to set the class discriminator of polymorphic base types.
@@ -169,60 +166,6 @@ annotation class SerialComment(
      */
     val value: String
 )
-
-private fun ConfigBuilder.toImpl(): Json5 {
-    return Json5Impl(serializersModule ?: EmptySerializersModule(), toSettings())
-}
-
-private class Json5Impl(
-    override val serializersModule: SerializersModule,
-    val settings: Settings,
-) : Json5 {
-
-    private fun <T> decode(deserializer: DeserializationStrategy<T>, reader: InputSource): T {
-        val parser = InjectableLookaheadParser(FormatParser(reader))
-        val res = MainDecoder(serializersModule, parser, settings).decodeSerializableValue(deserializer)
-        parser.next()
-        return res
-    }
-
-    private fun <T> encode(serializer: SerializationStrategy<T>, value: T, sink: OutputSink) {
-        val generator = FormatGenerator(sink, settings.outputStrategy)
-        MainEncoder(serializersModule, generator, settings).encodeSerializableValue(serializer, value)
-        generator.put(Token.EndOfFile)
-        sink.finalize()
-    }
-
-    override fun <T> decodeFromStream(deserializer: DeserializationStrategy<T>, inputStream: InputStream): T {
-        return decode(deserializer, InputStreamSource(inputStream))
-    }
-
-    override fun <T> decodeFromString(deserializer: DeserializationStrategy<T>, string: String): T {
-        return decode(deserializer, StringInputSource(string))
-    }
-
-    override fun <T> encodeToStream(serializer: SerializationStrategy<T>, value: T, outputStream: OutputStream) {
-        encode(serializer, value, OutputStreamSink(outputStream))
-    }
-
-    override fun <T> encodeToString(serializer: SerializationStrategy<T>, value: T): String {
-        val sink = StringOutputSink()
-        encode(serializer, value, sink)
-        return sink.toString()
-    }
-}
-
-/**
- * Convenience function that calls [Json5.decodeFromStream] with the default serializer for the type.
- */
-inline fun <reified T> Json5.decodeFromStream(inputStream: InputStream): T =
-    decodeFromStream(serializersModule.serializer(), inputStream)
-
-/**
- * Convenience function that calls [Json5.encodeToStream] with the default serializer for the type.
- */
-inline fun <reified T> Json5.encodeToStream(value: T, outputStream: OutputStream) =
-    encodeToStream(serializersModule.serializer(), value, outputStream)
 
 private val unsignedDescriptors = setOf(
     UByte.serializer(), UShort.serializer(), UInt.serializer(), ULong.serializer()

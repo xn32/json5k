@@ -1,5 +1,7 @@
 package io.github.xn32.json5k.format
 
+import kotlin.jvm.JvmInline
+
 internal sealed interface Token {
     object EndOfFile : Token
 

@@ -1,13 +1,11 @@
 package io.github.xn32.json5k.binding
 
-import io.github.xn32.json5k.CharError
 import io.github.xn32.json5k.DuplicateKeyError
 import io.github.xn32.json5k.Json5
 import io.github.xn32.json5k.MissingFieldError
 import io.github.xn32.json5k.UnexpectedValueError
 import io.github.xn32.json5k.UnknownKeyError
 import io.github.xn32.json5k.checkPosition
-import io.github.xn32.json5k.decodeFromStream
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.modules.SerializersModule
@@ -17,7 +15,6 @@ import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
 
 private inline fun <reified T> decode(input: String): T = Json5.decodeFromString(input)
 
@@ -439,29 +436,6 @@ class DeserializationTest {
             FlatDefaultImpl(15),
             json5.decodeFromString<DefaultInterface>("{ kind: 'flat', a: 15 }")
         )
-    }
-
-    @Test
-    fun `stream deserialization works`() {
-        val str = "null"
-        val num = str.byteInputStream().use {
-            Json5.decodeFromStream<Int?>(it)
-        }
-
-        assertNull(num)
-    }
-
-    @Test
-    fun `input stream is read to the end`() {
-        val str = "{}x"
-        str.byteInputStream().use {
-            val error = assertFailsWith<CharError> {
-                Json5.decodeFromStream(it)
-            }
-
-            error.checkPosition(1, 3)
-            assertEquals('x', error.char)
-        }
     }
 
     @Test

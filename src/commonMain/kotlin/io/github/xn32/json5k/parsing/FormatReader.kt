@@ -2,7 +2,6 @@ package io.github.xn32.json5k.parsing
 
 import io.github.xn32.json5k.format.Specification
 import io.github.xn32.json5k.throwTokenError
-import java.io.InputStream
 
 internal interface InputSource {
     fun peek(): Char
@@ -17,24 +16,6 @@ internal class StringInputSource(private val str: String) : InputSource {
     override fun consume(): Char = str[pos++]
 
     override val done: Boolean get() = pos >= str.length
-}
-
-internal class InputStreamSource(stream: InputStream) : InputSource {
-    private val reader = stream.bufferedReader()
-    private var next: Int = reader.read()
-
-    override val done get() = next < 0
-
-    override fun peek(): Char {
-        check(next >= 0)
-        return next.toChar()
-    }
-
-    override fun consume(): Char {
-        val c = peek()
-        next = reader.read()
-        return c
-    }
 }
 
 internal fun SourceReader.peekOrNull(): Char? = if (!done) peek() else null
