@@ -14,7 +14,7 @@ private inline fun <reified T> encode(input: T): String = Json5.encodeToString(i
 
 class SerializationTest {
     @Test
-    fun `signed value is encoded`() {
+    fun signedValue() {
         assertEquals("127", encode(Byte.MAX_VALUE))
         assertEquals("-128", encode(Byte.MIN_VALUE))
         assertEquals("32767", encode(Short.MAX_VALUE))
@@ -26,7 +26,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `unsigned value is encoded`() {
+    fun unsignedValue() {
         assertEquals("255", encode(UByte.MAX_VALUE))
         assertEquals("65535", encode(UShort.MAX_VALUE))
         assertEquals("4294967295", encode(UInt.MAX_VALUE))
@@ -34,7 +34,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `floating-point value is encoded`() {
+    fun floatingPointValue() {
         assertEquals("13.25", encode(13.25f))
         assertEquals("11.0", encode(11.0))
         assertEquals("Infinity", encode(Double.POSITIVE_INFINITY))
@@ -46,31 +46,31 @@ class SerializationTest {
     }
 
     @Test
-    fun `boolean value is encoded`() {
+    fun booleanValue() {
         assertEquals("true", encode(true))
         assertEquals("false", encode(false))
     }
 
     @Test
-    fun `enum value is encoded`() {
+    fun enumValue() {
         assertEquals("\"ITEM\"", encode(DummyEnum.ITEM))
     }
 
     @Test
-    fun `value class is encoded`() {
+    fun valueClass() {
         assertEquals("\"wrapped\"", encode(StringWrapper("wrapped")))
         assertEquals("{obj:\"str\"}", encode(Wrapper(StringWrapper("str"))))
     }
 
     @Test
-    fun `string is encoded`() {
+    fun stringValue() {
         assertEquals("\"x\"", encode('x'))
         assertEquals("\"abc\"", encode("abc"))
         assertEquals("\"\ud834\udd1e\"", encode("\ud834\udd1e"))
     }
 
     @Test
-    fun `nullable value is encoded`() {
+    fun nullableValue() {
         assertEquals("50", encode<Int?>(50))
         assertEquals("null", encode<Int?>(null))
         assertEquals("50", encode<UInt?>(50u))
@@ -78,12 +78,12 @@ class SerializationTest {
     }
 
     @Test
-    fun `list of integers is encoded`() {
+    fun listOfIntegers() {
         assertEquals("[3,6,7]", encode(listOf(3, 6, 7)))
     }
 
     @Test
-    fun `primitive array is encoded`() {
+    fun primitiveArray() {
         assertEquals(
             "[-2147483648,2147483647]",
             encode(intArrayOf(Int.MIN_VALUE, Int.MAX_VALUE))
@@ -102,7 +102,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `value containers are encoded`() {
+    fun valueContainers() {
         assertEquals(
             "{byte:127,short:32767,int:2147483647,long:9223372036854775807}",
             encode(SignedContainer(Byte.MAX_VALUE, Short.MAX_VALUE, Int.MAX_VALUE, Long.MAX_VALUE))
@@ -125,7 +125,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `default values are not encoded`() {
+    fun noDefaultValues() {
         @Serializable
         data class Dummy(val a: Short, val b: Short = 40)
 
@@ -133,7 +133,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `encoding of default values can be activated`() {
+    fun enforceDefaultValues() {
         @Serializable
         data class Dummy(val a: Short, val b: Short = 50)
 
@@ -145,7 +145,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `nested class-list structures are encoded`() {
+    fun nestedStructure() {
         @Serializable
         data class Container(val id: Int, val parts: List<Container>?)
 
@@ -156,17 +156,17 @@ class SerializationTest {
     }
 
     @Test
-    fun `map with string keys is encoded`() {
+    fun mapWithStringKeys() {
         assertEquals("{a:10,b:20,null:0}", encode(mapOf("a" to 10, "b" to 20, "null" to 0)))
     }
 
     @Test
-    fun `wrapped string is valid map key`() {
+    fun mapWithWrappedStringKeys() {
         assertEquals("{a:10}", encode(mapOf(StringWrapper("a") to 10)))
     }
 
     @Test
-    fun `unsupported map key type causes error`() {
+    fun unsupportedMapKeyType() {
         fun assertUnsupported(block: () -> Unit) {
             assertFailsWith<UnsupportedOperationException>(block = block)
         }
@@ -185,14 +185,14 @@ class SerializationTest {
     }
 
     @Test
-    fun `collision with polymorphic discriminator value is detected`() {
+    fun classDiscriminatorCollision() {
         assertFailsWith<UnsupportedOperationException> {
             encode(Wrapper<DefaultInterface>(InvalidDefaultImpl("abc")))
         }
     }
 
     @Test
-    fun `polymorphic type is serialized correctly`() {
+    fun polymorphicClass() {
         assertEquals(
             "{obj:{type:\"flat\",a:42}}",
             encode(Wrapper<DefaultInterface>(FlatDefaultImpl(42)))
@@ -200,25 +200,12 @@ class SerializationTest {
     }
 
     @Test
-    fun `customized polymorphic type is serialized correctly`() {
+    fun classSpecificDiscriminator() {
         assertEquals(
             "{obj:{category:\"main\",name:null}}",
             encode(Wrapper<CustomInterface>(CustomImpl(null)))
         )
-    }
 
-    @Test
-    fun `modified default discriminator name is considered`() {
-        val json5 = Json5 { classDiscriminator = "kind" }
-
-        assertEquals(
-            "{kind:\"flat\",a:50}",
-            json5.encodeToString<DefaultInterface>(FlatDefaultImpl(50))
-        )
-    }
-
-    @Test
-    fun `local discriminator name overwrites default name`() {
         val json5 = Json5 {
             classDiscriminator = "kind"
         }
@@ -227,10 +214,23 @@ class SerializationTest {
             "{category:\"main\",name:\"abc\"}",
             json5.encodeToString<CustomInterface>(CustomImpl("abc"))
         )
+
     }
 
     @Test
-    fun `pretty-print mode leads to multi-line output`() {
+    fun customGlobalClassDiscriminator() {
+        val json5 = Json5 {
+            classDiscriminator = "kind"
+        }
+
+        assertEquals(
+            "{kind:\"flat\",a:50}",
+            json5.encodeToString<DefaultInterface>(FlatDefaultImpl(50))
+        )
+    }
+
+    @Test
+    fun multilinePrettyPrintOutput() {
         val json5 = Json5 {
             prettyPrint = true
         }
@@ -247,7 +247,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `single-quote setting works in pretty-print mode`() {
+    fun useSingleQuotes() {
         val json5 = Json5 {
             prettyPrint = true
             useSingleQuotes = true
@@ -257,7 +257,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `member name quotation in pretty-print mode can be enforced`() {
+    fun quoteMemberNames() {
         val json5 = Json5 {
             prettyPrint = true
             quoteMemberNames = true
@@ -275,7 +275,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `serial comments are trimmed and added to pretty-print output`() {
+    fun serialComments() {
         val json5 = Json5 {
             prettyPrint = true
         }
@@ -309,7 +309,7 @@ class SerializationTest {
     }
 
     @Test
-    fun `class with contextual serializer is encoded`() {
+    fun contextualSerializer() {
         val json5 = Json5 {
             serializersModule = SerializersModule {
                 contextual(ColorAsStringSerializer)

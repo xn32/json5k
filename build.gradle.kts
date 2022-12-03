@@ -44,9 +44,6 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-
-        val jvmMain by getting
-        val jvmTest by getting
     }
 }
 

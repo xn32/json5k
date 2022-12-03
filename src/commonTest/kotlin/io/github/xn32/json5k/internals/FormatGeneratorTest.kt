@@ -19,14 +19,14 @@ private fun newHumanReadableStrategy(
 
 class FormatGeneratorTest {
     @Test
-    fun `top-level null is written`() {
+    fun nullValue() {
         assertEquals("null", generate(OutputStrategy.Compressed) {
             put(Token.Null)
         })
     }
 
     @Test
-    fun `top-level true and false are written`() {
+    fun booleanValues() {
         assertEquals("true", generate(OutputStrategy.Compressed) {
             put(Token.Bool(true))
         })
@@ -37,49 +37,62 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `signed negative integer is written`() {
+    fun signedNegativeInteger() {
         assertEquals("-4443", generate(OutputStrategy.Compressed) {
             put(Token.SignedInteger(-4443))
         })
     }
 
     @Test
-    fun `signed positive integer is written`() {
+    fun signedPositiveInteger() {
         assertEquals("33332", generate(OutputStrategy.Compressed) {
             put(Token.SignedInteger(33332))
         })
     }
 
     @Test
-    fun `unsigned integer is written`() {
+    fun unsignedInteger() {
         assertEquals("7371823712", generate(OutputStrategy.Compressed) {
             put(Token.UnsignedInteger(7371823712u))
         })
     }
 
     @Test
-    fun `large floating point number is written`() {
-        assertEquals("4.0E30", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(4e30))
+    fun largeFloatingPointNumber() {
+        assertEquals("1e+9", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(1e9))
+        })
+
+        assertEquals("4.511e+31", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(45.11e30))
         })
     }
 
     @Test
-    fun `small floating point number is written`() {
-        assertEquals("-2.0E-10", generate(OutputStrategy.Compressed) {
+    fun smallFloatingPointNumber() {
+        assertEquals("-2e-10", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(-2e-10))
         })
+
+
+        assertEquals("2.44467e-10", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(2.44467e-10))
+        })
     }
 
     @Test
-    fun `floating point number with exponent close to zero is written`() {
+    fun miscFloatingPointNumber() {
         assertEquals("55.0", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(55.0))
         })
+
+        assertEquals("-999999999.999", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(-9.99999999999e8))
+        })
     }
 
     @Test
-    fun `numeric literals are written`() {
+    fun numericLiterals() {
         assertEquals("Infinity", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(Double.POSITIVE_INFINITY))
         })
@@ -94,7 +107,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `empty top-level object is written`() {
+    fun emptyObject() {
         assertEquals("{}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.EndObject)
@@ -102,7 +115,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `top-level object with single member is written`() {
+    fun singleMemberObject() {
         assertEquals("{abc:10}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("abc"))
@@ -112,7 +125,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `top-level object with multiple members is written`() {
+    fun multipleMemberObject() {
         assertEquals("{first:10,second:null,third:1.1}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("first"))
@@ -126,7 +139,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `nested structures are written`() {
+    fun nestedStructure() {
         assertEquals("[{a:10},{b:20}]", generate(OutputStrategy.Compressed) {
             put(Token.BeginArray)
             put(Token.BeginObject)
@@ -142,42 +155,56 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `strings are enclosed in double quotation marks`() {
+    fun stringQuotation() {
         assertEquals("\"string\"", generate(OutputStrategy.Compressed) {
             put(Token.Str("string"))
         })
     }
 
     @Test
-    fun `CR and LF in strings are escaped`() {
+    fun humanReadableStringQuotation() {
+        assertEquals("\"12'34\\\"56\"", generate(newHumanReadableStrategy()) {
+            put(Token.Str("12'34\"56"))
+        })
+    }
+
+    @Test
+    fun configureStringQuotation() {
+        assertEquals("'12\\\'34\"56'", generate(newHumanReadableStrategy(quoteCharacter = '\'')) {
+            put(Token.Str("12'34\"56"))
+        })
+    }
+
+    @Test
+    fun escapeCrAndLf() {
         assertEquals("\"first\\r\\nsecond\"", generate(OutputStrategy.Compressed) {
             put(Token.Str("first\r\nsecond"))
         })
     }
 
     @Test
-    fun `quote char and backslash in strings are escaped`() {
-        assertEquals(""""string = \"\\underline\", char = '\\'"""", generate(OutputStrategy.Compressed) {
-            put(Token.Str("string = \"\\underline\", char = '\u005c'"))
-        })
-    }
-
-    @Test
-    fun `LS and PS in strings are escaped`() {
+    fun escapeLsAndPs() {
         assertEquals("\"x\\u2028y\\u2029z\"", generate(OutputStrategy.Compressed) {
             put(Token.Str("x\u2028y\u2029z"))
         })
     }
 
     @Test
-    fun `other chars in strings are not escaped`() {
+    fun escapeQuotesAndBackslash() {
+        assertEquals(""""string = \"\\underline\", char = '\\'"""", generate(OutputStrategy.Compressed) {
+            put(Token.Str("string = \"\\underline\", char = '\u005c'"))
+        })
+    }
+
+    @Test
+    fun escapeOtherChars() {
         assertEquals("\"\u0000\u2000\ud83c\udfbc\"", generate(OutputStrategy.Compressed) {
             put(Token.Str("\u0000\u2000\ud83c\udfbc"))
         })
     }
 
     @Test
-    fun `member names are quoted only when necessary`() {
+    fun memberNameQuotation() {
         assertEquals("{key:10,\"~a\":20}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("key"))
@@ -189,7 +216,24 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `human-readable output has correct indentation`() {
+    fun enforceMemberNameQuotation() {
+        assertEquals(
+            """
+                {
+                    "key": 1000
+                }
+            """.trimIndent(),
+            generate(newHumanReadableStrategy(quoteMemberNames = true)) {
+                put(Token.BeginObject)
+                put(Token.MemberName("key"))
+                put(Token.UnsignedInteger(1000u))
+                put(Token.EndObject)
+            }
+        )
+    }
+
+    @Test
+    fun outputIndentation() {
         assertEquals(
             """
                 {
@@ -213,7 +257,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `indentation width of human-readable output is configurable`() {
+    fun configureIndentation() {
         assertEquals(
             """
                 {
@@ -230,24 +274,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `quotation of member names can be enforced in human-readable output`() {
-        assertEquals(
-            """
-                {
-                    "key": 1000
-                }
-            """.trimIndent(),
-            generate(newHumanReadableStrategy(quoteMemberNames = true)) {
-                put(Token.BeginObject)
-                put(Token.MemberName("key"))
-                put(Token.UnsignedInteger(1000u))
-                put(Token.EndObject)
-            }
-        )
-    }
-
-    @Test
-    fun `empty structs are compressed in human-readable output`() {
+    fun compressEmptyStructs() {
         assertEquals("{}", generate(newHumanReadableStrategy()) {
             put(Token.BeginObject)
             put(Token.EndObject)
@@ -260,7 +287,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `consecutive structs in human-readable output are not separated by a line break`() {
+    fun consecutiveStructs() {
         assertEquals(
             """
                 [
@@ -284,21 +311,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `strings in human-readable output are enclosed in double quotation marks`() {
-        assertEquals("\"12'34\\\"56\"", generate(newHumanReadableStrategy()) {
-            put(Token.Str("12'34\"56"))
-        })
-    }
-
-    @Test
-    fun `quote char for strings in human-readable output is configurable`() {
-        assertEquals("'12\\\'34\"56'", generate(newHumanReadableStrategy(quoteCharacter = '\'')) {
-            put(Token.Str("12'34\"56"))
-        })
-    }
-
-    @Test
-    fun `serial comments are not present in compressed output`() {
+    fun serialCommentsInCompressedOutput() {
         assertEquals("{a:10}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             writeComment("comment")
@@ -309,7 +322,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `serial comments are added to human-readable output`() {
+    fun serialCommentsInHumanReadableOutput() {
         assertEquals(
             """
                 {
@@ -335,7 +348,7 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun `line terminators in serial comments are translated`() {
+    fun lineTerminatorsInSerialComments() {
         assertEquals(
             """
                 {

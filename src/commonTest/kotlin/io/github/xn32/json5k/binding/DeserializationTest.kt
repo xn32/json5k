@@ -20,7 +20,7 @@ private inline fun <reified T> decode(input: String): T = Json5.decodeFromString
 
 class DeserializationTest {
     @Test
-    fun `signed value is decoded`() {
+    fun signedValue() {
         assertEquals(Byte.MAX_VALUE, decode("127"))
         assertEquals(Byte.MIN_VALUE, decode("-128"))
         assertEquals(Short.MAX_VALUE, decode("32767"))
@@ -32,7 +32,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `unsigned value is decoded`() {
+    fun unsignedValue() {
         assertEquals(UByte.MAX_VALUE, decode("255"))
         assertEquals(UShort.MAX_VALUE, decode("65535"))
         assertEquals(UInt.MAX_VALUE, decode("4294967295"))
@@ -40,7 +40,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `floating-point value is decoded`() {
+    fun floatingPointValue() {
         assertEquals(13.25f, decode("13.25"))
         assertEquals(11.0, decode("11.0"))
         assertEquals(Double.POSITIVE_INFINITY, decode("Infinity"))
@@ -54,31 +54,31 @@ class DeserializationTest {
     }
 
     @Test
-    fun `boolean value is decoded`() {
+    fun booleanValue() {
         assertEquals(true, decode("true"))
         assertEquals(false, decode("false"))
     }
 
     @Test
-    fun `enum value is decoded`() {
+    fun enumValue() {
         assertEquals(DummyEnum.ITEM, decode("'ITEM'"))
     }
 
     @Test
-    fun `value class is decoded`() {
+    fun valueClass() {
         assertEquals(StringWrapper("wrapped"), decode("'wrapped'"))
         assertEquals(Wrapper(StringWrapper("str")), decode("{obj:\"str\"}"))
     }
 
     @Test
-    fun `string is decoded`() {
+    fun stringValue() {
         assertEquals('x', decode("'x'"))
         assertEquals("abc", decode("'abc'"))
         assertEquals("\ud834\udd1e", decode("'\ud834\udd1e'"))
     }
 
     @Test
-    fun `nullable value is decoded`() {
+    fun nullableValue() {
         assertEquals(50, decode<Int?>("50"))
         assertEquals(null, decode<Int?>("null"))
         assertEquals(50u, decode<UInt?>("50"))
@@ -86,12 +86,12 @@ class DeserializationTest {
     }
 
     @Test
-    fun `list of integers is decoded`() {
+    fun listOfIntegers() {
         assertEquals(listOf(3, 6, 7), decode("[3,6,7]"))
     }
 
     @Test
-    fun `primitive array is decoded`() {
+    fun primitiveArray() {
         assertContentEquals(
             intArrayOf(Int.MIN_VALUE, Int.MAX_VALUE),
             decode("[-2147483648,2147483647]")
@@ -110,7 +110,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `value container is decoded`() {
+    fun valueContainers() {
         assertEquals(
             SignedContainer(Byte.MAX_VALUE, Short.MAX_VALUE, Int.MAX_VALUE, Long.MAX_VALUE),
             decode("{byte:127,short:32767,int:2147483647,long:9223372036854775807}"),
@@ -133,17 +133,17 @@ class DeserializationTest {
     }
 
     @Test
-    fun `unexpected enum value is reported`() {
+    fun unexpectedEnumValue() {
         val error = assertFailsWith<UnexpectedValueError> {
             decode<DummyEnum>("'UNKNOWN'")
         }
 
-        assertContains(error.message, "unexpected enum value 'UNKNOWN' at position")
+        assertContains(error.violation, "unexpected enum value 'UNKNOWN'")
         error.checkPosition(1, 1)
     }
 
     @Test
-    fun `length of character variables is checked`() {
+    fun lengthOfCharValue() {
         val stringError = assertFailsWith<UnexpectedValueError> {
             decode<Char>("'ab'")
         }
@@ -153,23 +153,23 @@ class DeserializationTest {
         }
 
         for (error in listOf(stringError, emptyError)) {
-            assertContains(error.message, "single-character string expected at position")
+            assertContains(error.violation, "single-character string expected")
             error.checkPosition(1, 1)
         }
     }
 
     @Test
-    fun `range check for unsigned integers works`() {
+    fun rangeOfUnsignedIntegers() {
         val error = assertFailsWith<UnexpectedValueError> {
             decode<UByte>("256")
         }
 
-        assertContains(error.message, "unsigned integer in range [0..255] expected at position")
+        assertContains(error.violation, "unsigned integer in range [0..255] expected")
         error.checkPosition(1, 1)
     }
 
     @Test
-    fun `range check for signed integers works`() {
+    fun rangeOfSignedIntegers() {
         val minError = assertFailsWith<UnexpectedValueError> {
             decode<Byte>("-129")
         }
@@ -178,8 +178,8 @@ class DeserializationTest {
             decode<Byte>("128")
         }
 
-        assertContains(minError.message, "signed integer in range [-128..127] expected at position")
-        assertContains(maxError.message, "signed integer in range [-128..127] expected at position")
+        assertContains(minError.violation, "signed integer in range [-128..127] expected")
+        assertContains(maxError.violation, "signed integer in range [-128..127] expected")
 
         for (error in listOf(minError, maxError)) {
             maxError.checkPosition(1, 1)
@@ -187,7 +187,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `unexpected parser value is reported`() {
+    fun unexpectedParserValue() {
         val intError = assertFailsWith<UnexpectedValueError> {
             decode<Wrapper<Int>>("{ obj: { a: 10 }}")
         }
@@ -208,11 +208,11 @@ class DeserializationTest {
             decode<Wrapper<String>>("{ obj: [1, 2] }")
         }
 
-        assertContains(intError.message, "integer expected at position")
-        assertContains(unsignedIntError.message, "unsigned integer expected at position")
-        assertContains(floatError.message, "floating-point number expected at position")
-        assertContains(boolError.message, "boolean value expected at position")
-        assertContains(stringError.message, "string literal expected at position")
+        assertContains(intError.violation, "integer expected")
+        assertContains(unsignedIntError.violation, "unsigned integer expected")
+        assertContains(floatError.violation, "floating-point number expected")
+        assertContains(boolError.violation, "boolean value expected")
+        assertContains(stringError.violation, "string literal expected")
 
         for (error in listOf(intError, floatError, boolError, stringError)) {
             error.checkPosition(1, 8)
@@ -220,34 +220,34 @@ class DeserializationTest {
     }
 
     @Test
-    fun `missing object is reported`() {
+    fun missingObject() {
         val error = assertFailsWith<UnexpectedValueError> {
             decode<Map<String, Int>>("40")
         }
 
-        assertContains(error.message, "object expected at position")
+        assertContains(error.violation, "object expected")
         error.checkPosition(1, 1)
     }
 
     @Test
-    fun `missing array is reported`() {
+    fun missingArray() {
         val error = assertFailsWith<UnexpectedValueError> {
             decode<List<Int>>("true")
         }
 
-        assertContains(error.message, "array expected at position")
+        assertContains(error.violation, "array expected")
         error.checkPosition(1, 1)
     }
 
     @Test
-    fun `top-level class is decoded`() {
+    fun classValue() {
         @Serializable
         data class Class(val x: String)
         assertEquals(Class("abc"), decode("{ x: 'abc' }"))
     }
 
     @Test
-    fun `duplicate key in top-level class are prohibited by default`() {
+    fun duplicateClassKey() {
         @Serializable
         data class Class(val first: Int, val second: Long)
 
@@ -255,29 +255,29 @@ class DeserializationTest {
             decode<Class>("{ first: 10, second: 20, first: 30 }")
         }
 
-        assertContains(error.message, "duplicate key 'first' at position")
+        assertContains(error.violation, "duplicate key 'first'")
         assertEquals("first", error.key)
         error.checkPosition(1, 26)
     }
 
     @Test
-    fun `top-level map is decoded`() {
+    fun mapValue() {
         assertEquals(mapOf("first" to 10, "second" to 433), decode("{ first: 10, second: 433 }"))
     }
 
     @Test
-    fun `duplicate key in top-level map is reported`() {
+    fun duplicateMapKey() {
         val error = assertFailsWith<DuplicateKeyError> {
             decode<Map<String, Short>>("{ a: 10, a: 10 }")
         }
 
-        assertContains(error.message, "duplicate key 'a' at position")
+        assertContains(error.violation, "duplicate key 'a'")
         assertEquals("a", error.key)
         error.checkPosition(1, 10)
     }
 
     @Test
-    fun `unsupported map key type causes error`() {
+    fun unsupportedMapKeyType() {
         fun assertUnsupported(block: () -> Unit) {
             assertFailsWith<UnsupportedOperationException>(block = block)
         }
@@ -293,32 +293,22 @@ class DeserializationTest {
         assertUnsupported { decode<Map<Float, Int>>("{a:0}") }
         assertUnsupported { decode<Map<Double, Int>>("{a:0}") }
         assertUnsupported { decode<Map<Boolean, Int>>("{a:0}") }
+        assertUnsupported { decode<Map<String?, Int>>("{a:0}") }
     }
 
     @Test
-    fun `literals can be used as map keys`() {
+    fun literalsAsMapKeys() {
         assertEquals(mapOf("null" to 42), decode("{ null: 42 }"))
         assertEquals(mapOf("Infinity" to 10), decode("{ Infinity: 10 }"))
     }
 
     @Test
-    fun `unsupported map key types throw an error`() {
-        assertFailsWith<UnsupportedOperationException> {
-            decode<Map<String?, Int>>("{ abc: 10 }")
-        }
-
-        assertFailsWith<UnsupportedOperationException> {
-            decode<Map<Boolean, Int>>("{ true: 10 }")
-        }
-    }
-
-    @Test
-    fun `nested maps are supported`() {
+    fun nestedMapValue() {
         assertEquals(mapOf("a" to mapOf("x" to 1)), decode("{ a: { x: 1 } }"))
     }
 
     @Test
-    fun `implicit conversion to integers is prohibited`() {
+    fun noImplicitConversion() {
         val floatError = assertFailsWith<UnexpectedValueError> {
             decode<Long>("10.0")
         }
@@ -328,13 +318,13 @@ class DeserializationTest {
         }
 
         listOf(floatError, expError).forEach { error ->
-            assertContains(error.message, "integer expected at position")
+            assertContains(error.violation, "integer expected")
             error.checkPosition(1, 1)
         }
     }
 
     @Test
-    fun `singleton object is decoded`() {
+    fun singletonValue() {
         @Serializable
         data class SingletonWrapper(val obj: Singleton)
 
@@ -344,27 +334,27 @@ class DeserializationTest {
             decode<SingletonWrapper>("{ obj: { unknown: 0 } }")
         }
 
-        assertContains(error.message, "unknown key 'unknown' at position")
+        assertContains(error.violation, "unknown key 'unknown'")
         assertEquals("unknown", error.key)
         error.checkPosition(1, 10)
     }
 
     @Test
-    fun `flat polymorphic class is decoded`() {
+    fun polymorphicClass() {
         assertEquals(
             FlatDefaultImpl(10, 20), decode<DefaultInterface>("{ a: 10, type: 'flat', b: 20 }")
         )
     }
 
     @Test
-    fun `nested polymorphic class is decoded`() {
+    fun nestedPolymorphicClass() {
         assertEquals(
             NestedDefaultImpl(0, Wrapper(5)), decode<DefaultInterface>("{ x: { obj: 5 }, type: 'nested', a: 0 }")
         )
     }
 
     @Test
-    fun `inner polymorphic class is decoded`() {
+    fun innerPolymorphicClass() {
         assertEquals(
             Wrapper<DefaultInterface>(FlatDefaultImpl(10)),
             decode("{ obj: { type: 'flat', a: 10 } }")
@@ -372,50 +362,33 @@ class DeserializationTest {
     }
 
     @Test
-    fun `unknown class discriminator value is reported`() {
+    fun unknownClassDiscriminator() {
         val error = assertFailsWith<UnexpectedValueError> {
             decode<DefaultInterface>("{ type: 'unknown' }")
         }
 
-        assertContains(error.message, "unknown class name 'unknown' at position")
+        assertContains(error.violation, "unknown class name 'unknown'")
         error.checkPosition(1, 9)
     }
 
     @Test
-    fun `unknown object key is reported`() {
-        @Serializable
-        data class Entity(val x: Int)
-
-        val error = assertFailsWith<UnknownKeyError> {
-            decode<Entity>("{ abc: 10 }")
-        }
-
-        assertContains(error.message, "unknown key 'abc' at position")
-        assertEquals("abc", error.key)
-        error.checkPosition(1, 3)
-    }
-
-    @Test
-    fun `repeated polymorphic discriminator is recognized as error`() {
+    fun repeatedPolymorphicDiscriminator() {
         val error = assertFailsWith<DuplicateKeyError> {
             decode<DefaultInterface>("{ type: 'flat', type: 'flat' }")
         }
 
-        assertContains(error.message, "duplicate key 'type' at position")
+        assertContains(error.violation, "duplicate key 'type'")
         assertEquals("type", error.key)
         error.checkPosition(1, 17)
     }
 
     @Test
-    fun `custom class discriminator is supported`() {
+    fun classSpecificDiscriminator() {
         assertEquals(
             CustomImpl(null),
             decode<CustomInterface>("{ category: 'main', name: null }")
         )
-    }
 
-    @Test
-    fun `custom class discriminator overwrites default discriminator`() {
         val json5 = Json5 {
             classDiscriminator = "xyz"
         }
@@ -427,7 +400,7 @@ class DeserializationTest {
     }
 
     @Test
-    fun `custom class discriminator is considered`() {
+    fun customGlobalClassDiscriminator() {
         val json5 = Json5 {
             classDiscriminator = "kind"
         }
@@ -439,7 +412,21 @@ class DeserializationTest {
     }
 
     @Test
-    fun `missing field is reported`() {
+    fun unknownClassKey() {
+        @Serializable
+        data class Entity(val x: Int)
+
+        val error = assertFailsWith<UnknownKeyError> {
+            decode<Entity>("{ abc: 10 }")
+        }
+
+        assertContains(error.violation, "unknown key 'abc'")
+        assertEquals("abc", error.key)
+        error.checkPosition(1, 3)
+    }
+
+    @Test
+    fun missingFieldInFlatObject() {
         @Serializable
         data class Dummy(val a: Int, val b: Int)
 
@@ -447,13 +434,13 @@ class DeserializationTest {
             decode<Dummy>("{ b: 10 }")
         }
 
-        assertContains(error.message, "missing field 'a' in object at position")
+        assertContains(error.violation, "missing field 'a' in object")
         assertEquals("a", error.key)
         error.checkPosition(1, 1)
     }
 
     @Test
-    fun `missing field is associated with the correct hierarchy level`() {
+    fun missingFieldInNestedStructure() {
         @Serializable
         data class Inner(val x: Int)
 
@@ -464,7 +451,7 @@ class DeserializationTest {
             decode<Outer>("{ inner: { x: 10 } }")
         }
 
-        assertContains(outerError.message, "missing field 'y' in object at position")
+        assertContains(outerError.violation, "missing field 'y' in object")
         assertEquals("y", outerError.key)
         outerError.checkPosition(1, 1)
 
@@ -472,73 +459,34 @@ class DeserializationTest {
             decode<Outer>("{ inner: {}, y: 4 }")
         }
 
-        assertContains(innerError.message, "missing field 'x' in object at position")
+        assertContains(innerError.violation, "missing field 'x' in object")
         assertEquals("x", innerError.key)
         innerError.checkPosition(1, 10)
     }
 
     @Test
-    fun `missing field in polymorphic class is reported`() {
+    fun missingFieldInPolymorphicClass() {
         val error = assertFailsWith<MissingFieldError> {
             decode<DefaultInterface>("{ type: 'flat' }")
         }
 
-        assertContains(error.message, "missing field 'a' in object at position")
+        assertContains(error.violation, "missing field 'a' in object")
         assertEquals("a", error.key)
         error.checkPosition(1, 1)
     }
 
     @Test
-    fun `missing class discriminator is reported`() {
+    fun missingClassDiscriminator() {
         val error = assertFailsWith<MissingFieldError> {
             decode<DefaultInterface>("{}")
         }
 
-        assertContains(error.message, "missing field 'type' in object")
+        assertContains(error.violation, "missing field 'type' in object")
         error.checkPosition(1, 1)
     }
 
     @Test
-    fun `duplicate class key is reported`() {
-        @Serializable
-        data class Obj(val x: Int)
-
-        val error = assertFailsWith<DuplicateKeyError> {
-            decode<Obj>("{ x: 5, x: 10 }")
-        }
-
-        assertContains(error.message, "duplicate key 'x' at position")
-        assertEquals("x", error.key)
-        error.checkPosition(1, 9)
-    }
-
-    @Test
-    fun `duplicate map key is reported`() {
-        val error = assertFailsWith<DuplicateKeyError> {
-            decode<Map<String, Int>>("{ a: 10, b: 20, a: 20 }")
-        }
-
-        assertContains(error.message, "duplicate key 'a' at position")
-        assertEquals("a", error.key)
-        error.checkPosition(1, 17)
-    }
-
-    @Test
-    fun `unknown class key is reported`() {
-        @Serializable
-        data class Obj(val x: Int)
-
-        val error = assertFailsWith<UnknownKeyError> {
-            decode<Obj>("{ x: 5, y: 10 }")
-        }
-
-        assertContains(error.message, "unknown key 'y' at position")
-        assertEquals("y", error.key)
-        error.checkPosition(1, 9)
-    }
-
-    @Test
-    fun `class with contextual serializer is decoded`() {
+    fun contextualSerializer() {
         val json5 = Json5 {
             serializersModule = SerializersModule {
                 contextual(ColorAsStringSerializer)

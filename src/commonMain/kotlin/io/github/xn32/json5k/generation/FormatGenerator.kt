@@ -6,6 +6,8 @@ import io.github.xn32.json5k.format.DocumentTracker.TokenType
 import io.github.xn32.json5k.format.Specification
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.toHexString
+import kotlin.math.absoluteValue
+import kotlin.math.sign
 
 private const val INDENT_CHAR = ' '
 private const val LINE_TERMINATOR = "\n"
@@ -158,7 +160,7 @@ internal class FormatGenerator(private val sink: OutputSink, private val outputS
         when (token) {
             is Token.Bool -> sink.write(token.bool.toString())
             Token.Null -> sink.write("null")
-            is Token.FloatingPoint -> sink.write(token.number.toString())
+            is Token.FloatingPoint -> sink.write(token.number.toFormatString())
             is Token.SignedInteger -> sink.write(token.number.toString())
             is Token.UnsignedInteger -> sink.write(token.number.toString())
             is Token.Str -> writeQuoted(token.string)
@@ -194,3 +196,31 @@ private fun OutputSink.writeQuoted(quoteChar: Char, sequence: CharSequence) {
 
     write(quoteChar)
 }
+
+fun Double.toFormatString(): String {
+    if (isNaN()) {
+        return "NaN"
+    }
+
+    val value = if (isInfinite()) {
+        "Infinity"
+    } else {
+        val large = absoluteValue >= 1e9
+        val small = absoluteValue != 0.0 && absoluteValue <= 1e-9
+
+        if (large || small) {
+            absoluteValue.toScientificString()
+        } else {
+            absoluteValue.toPlainString()
+        }
+    }
+
+    return if (sign < 0) {
+        "-$value"
+    } else {
+        value
+    }
+}
+
+internal expect fun Double.toScientificString(): String
+internal expect fun Double.toPlainString(): String

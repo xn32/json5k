@@ -7,13 +7,7 @@ import io.github.xn32.json5k.parsing.SourceReader
 /**
  * Base class of all Exceptions that the library raises in response to invalid JSON5 input.
  */
-sealed class InputError constructor(msg: String, pos: LinePosition) : Exception() {
-    /**
-     * Human-readable description of the error along with its position (line and column)
-     * in the input stream.
-     */
-    override val message: String = "$msg at position $pos"
-
+sealed class InputError(val violation: String, pos: LinePosition) : Exception("$violation at position $pos") {
     /**
      * Line of the input stream position that the error is associated with.
      */
@@ -28,7 +22,7 @@ sealed class InputError constructor(msg: String, pos: LinePosition) : Exception(
 /**
  * Base class for all errors related to parsing the JSON5 input.
  */
-sealed class ParsingError constructor(msg: String, pos: LinePosition) : InputError(msg, pos)
+sealed class ParsingError(msg: String, pos: LinePosition) : InputError(msg, pos)
 
 /**
  * Exception class thrown if an unexpected literal is encountered in the JSON5 input.

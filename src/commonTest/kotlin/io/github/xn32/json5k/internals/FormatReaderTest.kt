@@ -21,7 +21,7 @@ private fun readerFor(str: String): FormatReader = FormatReader(StringInputSourc
 
 class FormatReaderTest {
     @Test
-    fun `input sequence is consumed correctly`() {
+    fun inputSequenceConsumed() {
         val reader = readerFor(SAMPLE_INPUT)
         SAMPLE_INPUT.forEach { char ->
             assertEquals(char, reader.consume())
@@ -29,7 +29,7 @@ class FormatReaderTest {
     }
 
     @Test
-    fun `completed stream is done`() {
+    fun completedStreamIsDone() {
         val reader = readerFor(SAMPLE_INPUT)
         assertFalse(reader.done)
         repeat(SAMPLE_INPUT.length) {
@@ -42,20 +42,20 @@ class FormatReaderTest {
     }
 
     @Test
-    fun `consumeWhile helper works correctly`() {
+    fun consumeWhile() {
         val reader = readerFor(SAMPLE_INPUT)
         assertEquals("abc", reader.consumeWhile(Char::isLetter))
     }
 
     @Test
-    fun `first element can be peeked`() {
+    fun peekChar() {
         val reader = readerFor(SAMPLE_INPUT)
         assertEquals(SAMPLE_INPUT.first(), reader.peek())
         assertEquals(SAMPLE_INPUT.first(), reader.consume())
     }
 
     @Test
-    fun `line-counting reader works for single line`() {
+    fun linePositionForSingleLine() {
         val reader = readerFor(SAMPLE_INPUT)
 
         var col = 1
@@ -67,28 +67,28 @@ class FormatReaderTest {
     }
 
     @Test
-    fun `line-counting reader works for multiple lines`() {
+    fun linePositionForMultipleLines() {
         val reader = readerFor("first\nsecond\r\nthird")
         reader.consumeAll()
         reader.checkPosition(3, 6)
     }
 
     @Test
-    fun `line-counting reader honors special line terminators`() {
+    fun specialLineTerminators() {
         val reader = readerFor("\nfirst\u2028\u2029second")
         reader.consumeAll()
         reader.checkPosition(4, 7)
     }
 
     @Test
-    fun `unclosed multi-line comment fails`() {
+    fun unclosedMultiLineComment() {
         val reader = readerFor("/*")
         val e = assertFailsWith<EndOfFileError> { reader.advance() }
         e.checkPosition(1, 3)
     }
 
     @Test
-    fun `multi-line comment is ignored`() {
+    fun multiLineComment() {
         val reader = readerFor("/* multi-line\r\n comment */\r\nx")
         reader.advance()
         reader.checkPosition(3, 1)
@@ -96,7 +96,7 @@ class FormatReaderTest {
     }
 
     @Test
-    fun `single-line comment before end of file is ignored`() {
+    fun singleLineComment() {
         val reader = readerFor("// single-line comment\ny")
         reader.advance()
         reader.checkPosition(2, 1)
@@ -104,7 +104,7 @@ class FormatReaderTest {
     }
 
     @Test
-    fun `single-line comment at end of file is ignored`() {
+    fun singleLineCommentAtEndOfFile() {
         val reader = readerFor("// comment\t")
         reader.advance()
         reader.checkPosition(1, 12)
@@ -112,7 +112,7 @@ class FormatReaderTest {
     }
 
     @Test
-    fun `position after final line terminator is correct`() {
+    fun positionAfterFinalLineTerminator() {
         val reader = readerFor("x\n").apply {
             advance()
             consume()

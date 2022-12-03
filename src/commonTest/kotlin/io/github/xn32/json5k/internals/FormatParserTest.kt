@@ -21,38 +21,38 @@ private fun parserFor(str: String): FormatParser = FormatParser(StringInputSourc
 
 class FormatParserTest {
     @Test
-    fun `empty input causes error`() {
+    fun emptyInput() {
         parserFor("").checkError<EndOfFileError>(1, 1)
     }
 
     @Test
-    fun `top-level whitespace is ignored`() {
+    fun topLevelWhitespace() {
         parserFor("\uFEFF \t\r\n\t\u000B\u000C\u00A0\u2001\u3000").checkError<EndOfFileError>(2, 7)
     }
 
     @Test
-    fun `unexpected top-level elements are reported`() {
+    fun unexpectedTopLevelChar() {
         parserFor("%").checkError<CharError>(1, 1) {
-            assertContains(it.message, "%")
+            assertContains(it.violation, "%")
         }
     }
 
     @Test
-    fun `reverse lookup for unexpected characters is performed`() {
+    fun reverseLookupForErrors() {
         parserFor("\b").checkError<CharError>(1, 1) {
-            assertContains(it.message, "\\b")
+            assertContains(it.violation, "\\b")
         }
     }
 
     @Test
-    fun `unexpected tokens are transcribed if necessary`() {
+    fun transcriptionForErrorMessages() {
         parserFor("\u000f").checkError<CharError>(1, 1) {
-            assertContains(it.message, "U+000F")
+            assertContains(it.violation, "U+000F")
         }
     }
 
     @Test
-    fun `end of file event is repeated`() {
+    fun endOfFileEvents() {
         parserFor("null").apply {
             checkNext<Token.Null>()
             repeat(10) {
@@ -62,7 +62,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `array of literals is recognized`() {
+    fun arrayParsing() {
         parserFor("\r\n[null, \nfalse\t]/**/").apply {
             checkNext<Token.BeginArray>(2, 1)
             checkNext<Token.Null>(2, 2)
@@ -76,7 +76,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `trailing comma in array is supported`() {
+    fun trailingCommaInArray() {
         parserFor("[null,]").apply {
             checkNext<Token.BeginArray>(1, 1)
             checkNext<Token.Null>(1, 2)
@@ -86,7 +86,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `unclosed array is detected`() {
+    fun unclosedArray() {
         parserFor("[null,").apply {
             checkNext<Token.BeginArray>(1, 1)
             checkNext<Token.Null>(1, 2)
@@ -95,7 +95,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `unclosed object is detected`() {
+    fun unclosedObject() {
         parserFor("{key: 10").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2)
@@ -105,7 +105,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `non-matching struct closer causes error`() {
+    fun unexpectedStructCloser() {
         parserFor("[null, true}").apply {
             checkNext<Token.BeginArray>(1, 1)
             checkNext<Token.Null>(1, 2)
@@ -122,7 +122,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `repeated comma in array causes error`() {
+    fun repeatedComma() {
         parserFor("[true,,false]").apply {
             checkNext<Token.BeginArray>(1, 1)
             checkNext<Token.Bool>(1, 2)
@@ -133,7 +133,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `array elements must be separated`() {
+    fun missingComma() {
         parserFor("[null false]").apply {
             checkNext<Token.BeginArray>(1, 1)
             checkNext<Token.Null>(1, 2)
@@ -144,7 +144,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `missing member value causes error`() {
+    fun missingMemberValue() {
         parserFor("{key:}").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2)
@@ -163,7 +163,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `invalid member name causes error`() {
+    fun invalidMemberName() {
         parserFor("{#x:10}").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkError<CharError>(1, 2)
@@ -181,7 +181,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `member name can be quoted or identifier names`() {
+    fun memberName() {
         parserFor("{'a':10,\"b\":20}").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2)
@@ -203,7 +203,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `nested arrays work`() {
+    fun nestedArrays() {
         parserFor("[[null, true], null]").apply {
             checkNext<Token.BeginArray>(1, 1)
             checkNext<Token.BeginArray>(1, 2)
@@ -217,7 +217,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `single-member object is recognized`() {
+    fun singleMemberObject() {
         parserFor("{abc: null}").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2) {
@@ -231,7 +231,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `nested objects work`() {
+    fun nestedObjects() {
         parserFor("{member: {key: null}}").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2) {
@@ -251,7 +251,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `literal member name is accepted`() {
+    fun literalMemberName() {
         parserFor("{null: null}").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2) {
@@ -265,7 +265,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `repeated member name causes error`() {
+    fun repeatedMemberName() {
         parserFor("{first: second:").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2)
@@ -276,7 +276,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `trailing comma in object works`() {
+    fun trailingCommaInObject() {
         parserFor("{member: null,}").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2)
@@ -287,7 +287,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `top-level object with trailing comma causes error`() {
+    fun commaAfterTopLevelValue() {
         parserFor("{},").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.EndObject>(1, 2)
@@ -298,22 +298,22 @@ class FormatParserTest {
     }
 
     @Test
-    fun `top-level null is recognized`() {
+    fun topLevelNull() {
         parserFor("null").checkNext<Token.Null>(1, 1).checkEnd(1, 5)
     }
 
     @Test
-    fun `top-level true is recognized`() {
+    fun topLevelTrue() {
         parserFor("true").checkNext<Token.Bool>(1, 1).checkEnd(1, 5)
     }
 
     @Test
-    fun `top-level false is recognized`() {
+    fun topLevelFalse() {
         parserFor("false").checkNext<Token.Bool>(1, 1).checkEnd(1, 6)
     }
 
     @Test
-    fun `whitespace around literals is ignored`() {
+    fun whitespaceAroundLiterals() {
         parserFor("\r\r null\r\n").checkNext<Token.Null>(3, 2).checkEnd(4, 1)
         parserFor(" false ").checkNext<Token.Bool>(1, 2).checkEnd(1, 8)
         parserFor(" +Infinity\n\n").checkNext<Token.Num>(1, 2).checkEnd(3, 1)
@@ -324,19 +324,19 @@ class FormatParserTest {
     }
 
     @Test
-    fun `comments around literals are ignored`() {
+    fun commentsAroundLiterals() {
         parserFor("/*x*/null/*y*/").checkNext<Token.Null>(1, 6).checkEnd(1, 15)
         parserFor("//x\r\nnull//y").checkNext<Token.Null>(2, 1).checkEnd(2, 8)
     }
 
     @Test
-    fun `top-level numeric literal without sign is recognized`() {
+    fun topLevelNumericLiteral() {
         parserFor("Infinity").checkFloatingPoint(1, 1, Double.POSITIVE_INFINITY).checkEnd(1, 9)
         parserFor("NaN").checkFloatingPoint(1, 1, Double.NaN).checkEnd(1, 4)
     }
 
     @Test
-    fun `top-level numeric literal with sign is recognized`() {
+    fun topLevelNumericLiteralWithSign() {
         parserFor("+Infinity").checkFloatingPoint(1, 1, Double.POSITIVE_INFINITY).checkEnd(1, 10)
         parserFor("-Infinity").checkFloatingPoint(1, 1, Double.NEGATIVE_INFINITY).checkEnd(1, 10)
         parserFor("+NaN").checkFloatingPoint(1, 1, Double.NaN).checkEnd(1, 5)
@@ -344,12 +344,12 @@ class FormatParserTest {
     }
 
     @Test
-    fun `unknown literal is reported`() {
+    fun unknownLiteral() {
         parserFor("oranges").checkError<LiteralError>(1, 1)
     }
 
     @Test
-    fun `plain double string is recognized`() {
+    fun plainDoubleString() {
         val str = "ab 'cd' ef"
         parserFor("\t\"$str\"").checkNext<Token.Str>(1, 2) {
             assertEquals(str, it.string)
@@ -357,7 +357,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `plain single string is recognized`() {
+    fun plainSingleString() {
         val str = "ab \"cd\" ef"
         parserFor("\t'$str'").checkNext<Token.Str>(1, 2) {
             assertEquals(str, it.string)
@@ -365,102 +365,95 @@ class FormatParserTest {
     }
 
     @Test
-    fun `line continuation in string works`() {
+    fun lineContinuationInString() {
         parserFor("\t'x \\\ny'\t").checkNext<Token.Str>(1, 2) {
             assertEquals("x y", it.string)
         }.checkEnd(2, 4)
     }
 
     @Test
-    fun `line terminator in string causes error`() {
+    fun lineTerminatorInString() {
         parserFor("\t'abc de\nabc de'").checkError<CharError>(1, 9) {
             assertEquals('\n', it.char)
         }
     }
 
     @Test
-    fun `single escape sequence is recognized`() {
+    fun singleEscapeSequence() {
         parserFor("'x\\by'").checkNext<Token.Str>(1, 1) {
             assertEquals("x\by", it.string)
         }
     }
 
     @Test
-    fun `unsupported escape sequence causes error`() {
+    fun unknownEscapeSequence() {
         parserFor("'xyz \\4 xyz'").checkError<CharError>(1, 7)
     }
 
     @Test
-    fun `incomplete hex token in string causes error`() {
+    fun incompleteHexToken() {
         parserFor("'\\xaZ'").checkError<CharError>(1, 5)
     }
 
     @Test
-    fun `incomplete unicode token in string causes error`() {
+    fun incompleteUnicodeToken() {
         parserFor("'x\\u123$'").checkError<CharError>(1, 8)
     }
 
     @Test
-    fun `non-terminated string causes error`() {
+    fun unterminatedString() {
         parserFor("\t'example").checkError<EndOfFileError>(1, 10)
     }
 
     @Test
-    fun `incomplete escape sequence causes error`() {
+    fun incompleteEscapeSequence() {
         parserFor("'\\").checkError<EndOfFileError>(1, 3)
     }
 
     @Test
-    fun `lowercase hex chars are decoded`() {
+    fun lowercaseUnicodeEscapeSequence() {
         parserFor("'\\u22c6'").checkNext<Token.Str>(1, 1) {
             assertEquals("\u22c6", it.string)
         }.checkEnd(1, 9)
     }
 
     @Test
-    fun `uppercase hex chars are decoded`() {
+    fun uppercaseUnicodeEscapeSequence() {
         parserFor("'\\u215E'").checkNext<Token.Str>(1, 1) {
             assertEquals("\u215E", it.string)
         }.checkEnd(1, 9)
     }
 
     @Test
-    fun `unicode escape sequence works`() {
-        parserFor("'a\\u1234z'").checkNext<Token.Str>(1, 1) {
-            assertEquals("a\u1234z", it.string)
-        }.checkEnd(1, 11)
-    }
-
-    @Test
-    fun `valid UTF-16 surrogate pair is recognized`() {
+    fun unicodeSurrogatePair() {
         parserFor("'\\uD83C\\uDFBC'").checkNext<Token.Str>(1, 1) {
             assertEquals("\ud83c\udfbc", it.string)
         }.checkEnd(1, 15)
     }
 
     @Test
-    fun `hex byte escape sequence works`() {
+    fun hexEscapeSequence() {
         parserFor("'a\\x12z'").checkNext<Token.Str>(1, 1) {
             assertEquals("a\u0012z", it.string)
         }.checkEnd(1, 9)
     }
 
     @Test
-    fun `non-escape characters are translated`() {
+    fun nonEscapedChars() {
         parserFor("'\\a\\c\\$'").checkNext<Token.Str>(1, 1) {
             assertEquals("ac$", it.string)
         }.checkEnd(1, 9)
     }
 
     @Test
-    fun `null byte escape sequence works`() {
+    fun nullByteEscapeSequence() {
         parserFor("'\\0x\\0y'").checkNext<Token.Str>(1, 1) {
             assertEquals("\u0000x\u0000y", it.string)
         }.checkEnd(1, 9)
     }
 
     @Test
-    fun `LS and PS may appear unescaped`() {
+    fun unescapedLsAndPs() {
         val str = "\u2028+\u2029"
         parserFor("'$str'").checkNext<Token.Str>(1, 1) {
             assertEquals(str, it.string)
@@ -468,7 +461,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `event position correct after line continuation`() {
+    fun positionAfterLineContinuation() {
         parserFor("'Some\\\nstring'~").apply {
             checkNext<Token.Str>(1, 1)
             checkError<CharError>(2, 8)
@@ -476,14 +469,14 @@ class FormatParserTest {
     }
 
     @Test
-    fun `zero is recognized`() {
+    fun topLevelZero() {
         parserFor("0").checkNext<Token.UnsignedInteger>(1, 1) {
             assertEquals(0u, it.number)
         }.checkEnd(1, 2)
     }
 
     @Test
-    fun `decimal integer literal must not start with a zero`() {
+    fun leadingZero() {
         parserFor("01").apply {
             checkNext<Token.UnsignedInteger>(1, 1)
             checkError<CharError>(1, 2)
@@ -491,7 +484,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `fractional number can start with a zero`() {
+    fun fractionalNumber() {
         parserFor("0.111").apply {
             checkFloatingPoint(1, 1, 0.111)
             checkEnd(1, 6)
@@ -499,12 +492,12 @@ class FormatParserTest {
     }
 
     @Test
-    fun `leading decimal point is accepted`() {
+    fun leadingDecimalPoint() {
         parserFor(".45").checkFloatingPoint(1, 1, 0.45).checkEnd(1, 4)
     }
 
     @Test
-    fun `hexadecimal number is recognized`() {
+    fun hexNumber() {
         parserFor("0XaA01").checkNext<Token.UnsignedInteger>(1, 1) {
             assertEquals(0xAA01u, it.number)
         }.checkEnd(1, 7)
@@ -515,20 +508,20 @@ class FormatParserTest {
     }
 
     @Test
-    fun `decimal integer is recognized`() {
+    fun decimalInteger() {
         parserFor("400").checkNext<Token.UnsignedInteger>(1, 1) {
             assertEquals(400u, it.number)
         }.checkEnd(1, 4)
     }
 
     @Test
-    fun `overflow on negative integers is recognized`() {
+    fun negativeIntegerOverflow() {
         parserFor("-0x8000000000000000").checkNext<Token.SignedInteger>(1, 1)
         parserFor("-0x8000000000000001").checkError<OverflowError>(1, 1)
     }
 
     @Test
-    fun `overflow on positive integers is recognized`() {
+    fun positiveIntegerOverflow() {
         parserFor("0xFFFFFFFFFFFFFFFF").checkNext<Token.UnsignedInteger>(1, 1) {
             assertEquals(ULong.MAX_VALUE, it.number)
         }.checkEnd(1, 19)
@@ -537,55 +530,55 @@ class FormatParserTest {
     }
 
     @Test
-    fun `decimal integer can have trailing decimal point`() {
+    fun trailingDecimalPoint() {
         parserFor("55.").checkFloatingPoint(1, 1, 55.0).checkEnd(1, 4)
     }
 
     @Test
-    fun `numbers with exponent are decimal numbers`() {
+    fun scientificNotation() {
         parserFor("11e0").checkFloatingPoint(1, 1, 11.0).checkEnd(1, 5)
     }
 
     @Test
-    fun `negative decimal integer is recognized`() {
+    fun negativeDecimalInteger() {
         parserFor("-1").checkNext<Token.SignedInteger>(1, 1) {
             assertEquals(-1, it.number)
         }.checkEnd(1, 3)
     }
 
     @Test
-    fun `negative hexadecimal integer is recognized`() {
+    fun negativeHexNumber() {
         parserFor("-0xFF1E").checkNext<Token.SignedInteger>(1, 1) {
             assertEquals(-0xFF1E, it.number)
         }.checkEnd(1, 8)
     }
 
     @Test
-    fun `negative fractional number is recognized`() {
+    fun negativeFractionalNumber() {
         parserFor("-0.25").checkFloatingPoint(1, 1, -0.25).checkEnd(1, 6)
     }
 
     @Test
-    fun `single decimal point causes error`() {
+    fun singleDecimalPoint() {
         parserFor(".").checkError<EndOfFileError>(1, 2)
         parserFor(".z").checkError<CharError>(1, 2)
         parserFor("\n.\t").checkError<CharError>(2, 2)
     }
 
     @Test
-    fun `exponents with lowercase indicator are recognized`() {
+    fun lowercaseExponentSymbol() {
         parserFor("11.2e-3").checkFloatingPoint(1, 1, .0112).checkEnd(1, 8)
         parserFor("55e10").checkFloatingPoint(1, 1, 55e10).checkEnd(1, 6)
         parserFor("10e+3").checkFloatingPoint(1, 1, 10e3).checkEnd(1, 6)
     }
 
     @Test
-    fun `uppercase exponent indicator is recognized`() {
+    fun uppercaseExponentSymbol() {
         parserFor(".4E10").checkFloatingPoint(1, 1, .4e10).checkEnd(1, 6)
     }
 
     @Test
-    fun `erroneous exponent indicator usage is reported`() {
+    fun erroneousExponentSymbol() {
         parserFor(".4f10").apply {
             checkNext<Token.FloatingPoint>(1, 1)
             checkError<CharError>(1, 3)
@@ -598,7 +591,7 @@ class FormatParserTest {
     }
 
     @Test
-    fun `repeated decimal points are detected`() {
+    fun repeatedDecimalPoint() {
         parserFor("10.25.5").apply {
             checkNext<Token.FloatingPoint>(1, 1)
             checkError<CharError>(1, 6)
@@ -606,22 +599,22 @@ class FormatParserTest {
     }
 
     @Test
-    fun `incomplete number is detected`() {
+    fun incompleteNumber() {
         parserFor("+").checkError<EndOfFileError>(1, 2)
     }
 
     @Test
-    fun `incomplete hexadecimal number is detected`() {
+    fun incompleteHexNumber() {
         parserFor("0x").checkError<EndOfFileError>(1, 3)
     }
 
     @Test
-    fun `incomplete exponent is detected`() {
+    fun incompleteExponent() {
         parserFor("1e").checkError<EndOfFileError>(1, 3)
     }
 
     @Test
-    fun `unknown numeric literal is detected`() {
+    fun unknownNumericLiteral() {
         parserFor("+None").checkError<LiteralError>(1, 2)
     }
 }
