@@ -1,31 +1,50 @@
 import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URL
 
 plugins {
-    kotlin("jvm") version "1.7.20"
+    kotlin("multiplatform") version "1.7.20"
     kotlin("plugin.serialization") version "1.7.20"
     id("org.jetbrains.kotlinx.kover") version "0.6.1"
     id("org.jetbrains.dokka") version "1.7.20"
     `maven-publish`
-    `java-library`
     signing
 }
 
 group = "io.github.xn32"
-version = "0.2.1"
+version = "0.3.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    testImplementation(kotlin("test"))
-    api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.1")
-}
+kotlin {
+    jvm {
+        compilations.configureEach {
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
+        }
 
-tasks.test {
-    useJUnitPlatform()
+        testRuns.configureEach {
+            executionTask.configure {
+                useJUnitPlatform()
+            }
+        }
+    }
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.1")
+            }
+        }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+    }
 }
 
 val sonatypeUsername: String? by project
@@ -34,33 +53,29 @@ val sonatypePassword: String? by project
 val isReleaseVersion = !version.toString().endsWith("SNAPSHOT")
 
 publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            name.set("json5k")
+            description.set("JSON5 library for Kotlin")
+            url.set("https://github.com/xn32/json5k")
 
-            pom {
-                name.set("json5k")
-                description.set("JSON5 library for Kotlin")
+            scm {
                 url.set("https://github.com/xn32/json5k")
+                connection.set("scm:git:git://github.com/xn32/json5k.git")
+                developerConnection.set("scm:git:ssh://git@github.com/xn32/json5k.git")
+            }
 
-                scm {
-                    url.set("https://github.com/xn32/json5k")
-                    connection.set("scm:git:git://github.com/xn32/json5k.git")
-                    developerConnection.set("scm:git:ssh://git@github.com/xn32/json5k.git")
+            developers {
+                developer {
+                    id.set("xn32")
+                    url.set("https://github.com/xn32")
                 }
+            }
 
-                developers {
-                    developer {
-                        id.set("xn32")
-                        url.set("https://github.com/xn32")
-                    }
-                }
-
-                licenses {
-                    license {
-                        name.set("The Apache Software License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
+            licenses {
+                license {
+                    name.set("The Apache Software License, Version 2.0")
+                    url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                 }
             }
         }
@@ -82,25 +97,12 @@ publishing {
     }
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
 signing {
     isRequired = isReleaseVersion && gradle.taskGraph.hasTask("publish")
-    sign(publishing.publications["mavenJava"])
+    sign(publishing.publications)
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
-}
-
-tasks.withType<GenerateModuleMetadata> {
-    enabled = false
-}
-
-tasks.withType<DokkaTask>() {
+tasks.withType<DokkaTask>().configureEach {
     val githubRepo = "https://github.com/xn32/json5k"
     val footerMsg = "<a href='$githubRepo'>json5k on GitHub</a>"
 
@@ -119,8 +121,8 @@ tasks.withType<DokkaTask>() {
                     "main"
                 }
 
-                localDirectory.set(file("src/main/kotlin"))
-                remoteUrl.set(URL("$githubRepo/blob/$gitVersion/src/main/kotlin"))
+                localDirectory.set(file("src"))
+                remoteUrl.set(URL("$githubRepo/blob/$gitVersion/src"))
                 remoteLineSuffix.set("#L")
             }
         }
