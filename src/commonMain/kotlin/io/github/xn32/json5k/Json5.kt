@@ -70,7 +70,6 @@ sealed class Json5 constructor(
         val sink = StringOutputSink()
         encode(serializer, value, sink)
         return sink.toString()
-
     }
 
     /**
@@ -100,7 +99,6 @@ sealed class Json5 constructor(
         generator.put(Token.EndOfFile)
         sink.finalize()
     }
-
 }
 
 /**
@@ -167,9 +165,8 @@ annotation class SerialComment(
     val value: String
 )
 
-private val unsignedDescriptors = setOf(
-    UByte.serializer(), UShort.serializer(), UInt.serializer(), ULong.serializer()
-).map(DeserializationStrategy<*>::descriptor)
+private val unsignedDescriptors = setOf(UByte.serializer(), UShort.serializer(), UInt.serializer(), ULong.serializer())
+    .map(DeserializationStrategy<*>::descriptor)
 
 internal val SerialDescriptor.isUnsignedNumber: Boolean
     get() = this in unsignedDescriptors

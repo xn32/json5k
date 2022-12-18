@@ -622,7 +622,9 @@ class FormatParserTest {
 internal typealias OptionalCheck<T> = ((T) -> Unit)?
 
 private inline fun <reified T : Token> Parser<Token>.checkNext(
-    line: Int? = null, column: Int? = null, noinline check: OptionalCheck<T> = null
+    line: Int? = null,
+    column: Int? = null,
+    noinline check: OptionalCheck<T> = null
 ): Parser<Token> {
     val (pos, token) = next()
     if (line != null) {
@@ -635,7 +637,9 @@ private inline fun <reified T : Token> Parser<Token>.checkNext(
 }
 
 private inline fun <reified E : ParsingError> Parser<Token>.checkError(
-    line: Int, column: Int, noinline check: OptionalCheck<E> = null
+    line: Int,
+    column: Int,
+    noinline check: OptionalCheck<E> = null
 ): Parser<Token> {
     val e = assertFailsWith<E> { next() }
     e.checkPosition(line, column)

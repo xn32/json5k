@@ -6,9 +6,9 @@ import io.github.xn32.json5k.UnexpectedValueError
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.isUnsignedNumber
 import io.github.xn32.json5k.parsing.InjectableLookaheadParser
+import io.github.xn32.json5k.parsing.LinePosition
 import io.github.xn32.json5k.parsing.LookaheadParser
 import io.github.xn32.json5k.parsing.Parser
-import io.github.xn32.json5k.parsing.LinePosition
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException

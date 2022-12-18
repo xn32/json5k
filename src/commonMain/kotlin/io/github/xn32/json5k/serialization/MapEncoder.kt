@@ -27,7 +27,6 @@ internal class MapEncoder(parent: MainEncoder) : StructEncoder(parent) {
     }
 }
 
-
 private class KeyEncoder(parent: MainEncoder) : Encoder {
     override val serializersModule: SerializersModule = parent.serializersModule
     private val generator: FormatGenerator = parent.generator
