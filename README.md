@@ -1,6 +1,6 @@
 # json5k
 
-[![Build status](https://img.shields.io/github/workflow/status/xn32/json5k/Build)](https://github.com/xn32/json5k/actions/workflows/build.yml)
+[![Build status](https://img.shields.io/github/actions/workflow/status/xn32/json5k/build.yml?branch=main)](https://github.com/xn32/json5k/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/xn32/json5k/branch/main/graph/badge.svg?token=PBPA7T92CC)](https://codecov.io/gh/xn32/json5k)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.xn32/json5k)](https://search.maven.org/artifact/io.github.xn32/json5k/)
 [![API documentation](https://img.shields.io/badge/docs-Dokka-informational)](https://xn32.github.io/json5k/api/)
