@@ -102,10 +102,6 @@ signing {
     sign(publishing.publications)
 }
 
-tasks.withType<GenerateModuleMetadata>().configureEach {
-    enabled = false
-}
-
 tasks.withType<DokkaTask>().configureEach {
     val githubRepo = "https://github.com/xn32/json5k"
     val footerMsg = "<a href='$githubRepo'>json5k on GitHub</a>"
