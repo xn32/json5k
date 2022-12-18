@@ -58,43 +58,51 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun largeFloatingPointNumber() {
-        assertEquals("1e+9", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(1e9))
-        })
-
-        assertEquals("4.511e+31", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(45.11e30))
-        })
-    }
-
-    @Test
-    fun smallFloatingPointNumber() {
-        assertEquals("-2e-10", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(-2e-10))
-        })
-
-        assertEquals("9.9e-7", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(0.99e-6))
-        })
-    }
-
-    @Test
-    fun miscFloatingPointNumber() {
+    fun plainFloatingPointNumber() {
         assertEquals("0.0", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(0.0))
         })
 
-        assertEquals("999999999.0", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(0.999999999e9))
+        assertEquals("9000000.0", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(0.9e7))
+        })
+
+        assertEquals("0.001", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(1e-3))
         })
 
         assertEquals("-0.1123", generate(OutputStrategy.Compressed) {
             put(Token.FloatingPoint(-0.1123))
         })
+    }
 
-        assertEquals("0.000001", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(1e-6))
+    @Test
+    fun largeFloatingPointNumber() {
+        assertEquals("1.0E7", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(1e7))
+        })
+
+        assertEquals("-1.0E7", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(-1e7))
+        })
+
+        assertEquals("4.511E31", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(4.511e31))
+        })
+    }
+
+    @Test
+    fun smallFloatingPointNumber() {
+        assertEquals("9.0E-4", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(0.9e-3))
+        })
+
+        assertEquals("-9.0E-4", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(-0.9e-3))
+        })
+
+        assertEquals("5.612E-20", generate(OutputStrategy.Compressed) {
+            put(Token.FloatingPoint(5.612e-20))
         })
     }
 
