@@ -219,5 +219,5 @@ This will result in the following output:
 
 ### Further examples
 
-See the unit tests for [serialization](src/test/kotlin/io/github/xn32/json5k/binding/SerializationTest.kt)
-and [deserialization](src/test/kotlin/io/github/xn32/json5k/binding/DeserializationTest.kt) for more examples.
+See the unit tests for [serialization](src/commonTest/kotlin/io/github/xn32/json5k/binding/SerializationTest.kt)
+and [deserialization](src/commonTest/kotlin/io/github/xn32/json5k/binding/DeserializationTest.kt) for more examples.
