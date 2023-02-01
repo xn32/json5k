@@ -3,7 +3,6 @@ name: Build
 on:
   push:
     branches:
-      - main
   pull_request:
     branches:
       - main
@@ -16,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         jdk: [8, 11]
     runs-on: ${{ matrix.os }}
     steps:
