@@ -1,5 +1,5 @@
 # Module json5k
-This is an experimental [JSON5](https://json5.org) library for Kotlin/JVM. Is is implemented as a third-party format for the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)
+This is an experimental [JSON5](https://json5.org) library for Kotlin. Is is implemented as a third-party format for the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)
 framework and can be used to both parse and generate JSON5 text.
 
 ## Key features
