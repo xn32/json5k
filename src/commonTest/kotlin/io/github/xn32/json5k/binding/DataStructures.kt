@@ -12,7 +12,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlin.jvm.JvmInline
 
 @Serializable
-internal enum class DummyEnum { ITEM }
+internal enum class DummyEnum { ITEM, @SerialName("NONE") LAST }
 
 @Serializable
 internal data class UnsignedContainer(val byte: UByte, val short: UShort, val int: UInt, val long: ULong)

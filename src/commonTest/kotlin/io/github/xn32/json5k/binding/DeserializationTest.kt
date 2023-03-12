@@ -62,6 +62,7 @@ class DeserializationTest {
     @Test
     fun enumValue() {
         assertEquals(DummyEnum.ITEM, decode("'ITEM'"))
+        assertEquals(DummyEnum.LAST, decode("'NONE'"))
     }
 
     @Test

@@ -54,6 +54,7 @@ class SerializationTest {
     @Test
     fun enumValue() {
         assertEquals("\"ITEM\"", encode(DummyEnum.ITEM))
+        assertEquals("\"NONE\"", encode(DummyEnum.LAST))
     }
 
     @Test
