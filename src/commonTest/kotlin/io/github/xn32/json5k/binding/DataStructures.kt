@@ -11,10 +11,6 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.jvm.JvmInline
 
-@JvmInline
-@Serializable
-internal value class StringWrapper(val str: String)
-
 @Serializable
 internal enum class DummyEnum { ITEM }
 
@@ -35,6 +31,10 @@ internal object Singleton
 
 @Serializable
 internal data class Wrapper<T>(val obj: T)
+
+@JvmInline
+@Serializable
+internal value class InlineWrapper<T>(val obj: T)
 
 @Serializable
 internal sealed interface DefaultInterface

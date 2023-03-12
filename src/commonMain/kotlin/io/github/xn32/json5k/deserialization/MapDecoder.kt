@@ -40,7 +40,7 @@ internal class MapDecoder(parent: MainDecoder) : StructDecoder(parent, Token.Beg
     }
 }
 
-private class KeyDecoder(parent: MainDecoder) : Decoder {
+private class KeyDecoder(private val parent: MainDecoder) : Decoder {
     override val serializersModule: SerializersModule = parent.serializersModule
     private val specifiedKeys: MutableSet<String> = mutableSetOf()
     private val parser: LookaheadParser<Token> = parent.parser
@@ -61,7 +61,7 @@ private class KeyDecoder(parent: MainDecoder) : Decoder {
     override fun decodeDouble(): Double = throwKeyTypeException()
 
     @ExperimentalSerializationApi
-    override fun decodeNotNullMark(): Boolean = throwKeyTypeException()
+    override fun decodeNotNullMark(): Boolean = parent.decodeNotNullMark()
 
     @ExperimentalSerializationApi
     override fun decodeNull(): Nothing = throwKeyTypeException()

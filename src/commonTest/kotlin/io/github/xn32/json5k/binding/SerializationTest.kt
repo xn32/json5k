@@ -58,8 +58,8 @@ class SerializationTest {
 
     @Test
     fun valueClass() {
-        assertEquals("\"wrapped\"", encode(StringWrapper("wrapped")))
-        assertEquals("{obj:\"str\"}", encode(Wrapper(StringWrapper("str"))))
+        assertEquals("\"wrapped\"", encode(InlineWrapper("wrapped")))
+        assertEquals("{obj:\"str\"}", encode(Wrapper(InlineWrapper("str"))))
     }
 
     @Test
@@ -158,11 +158,13 @@ class SerializationTest {
     @Test
     fun mapWithStringKeys() {
         assertEquals("{a:10,b:20,null:0}", encode(mapOf("a" to 10, "b" to 20, "null" to 0)))
+        assertEquals("{abc:0}", encode(mapOf<String?, Int>("abc" to 0)))
     }
 
     @Test
     fun mapWithWrappedStringKeys() {
-        assertEquals("{a:10}", encode(mapOf(StringWrapper("a") to 10)))
+        assertEquals("{a:10}", encode(mapOf(InlineWrapper("a") to 10)))
+        assertEquals("{abc:0}", encode(mapOf<InlineWrapper<String>?, Int>(InlineWrapper("abc") to 0)))
     }
 
     @Test
@@ -172,7 +174,10 @@ class SerializationTest {
         }
 
         assertUnsupported { encode(mapOf(DummyEnum.ITEM to 0)) }
-        assertUnsupported { encode(mapOf(Wrapper(10) to 0)) }
+        assertUnsupported { encode(mapOf<DummyEnum?, Int>(DummyEnum.ITEM to 0)) }
+        assertUnsupported { encode(mapOf<String?, Int>(null to 0)) }
+        assertUnsupported { encode(mapOf<InlineWrapper<String>?, Int>(null to 0)) }
+        assertUnsupported { encode(mapOf(InlineWrapper(10) to 0)) }
         assertUnsupported { encode(mapOf<Int?, Int>(null to 0)) }
         assertUnsupported { encode(mapOf(0.toChar() to 0)) }
         assertUnsupported { encode(mapOf(0.toByte() to 0)) }

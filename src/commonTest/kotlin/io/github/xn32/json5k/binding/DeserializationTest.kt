@@ -66,8 +66,8 @@ class DeserializationTest {
 
     @Test
     fun valueClass() {
-        assertEquals(StringWrapper("wrapped"), decode("'wrapped'"))
-        assertEquals(Wrapper(StringWrapper("str")), decode("{obj:\"str\"}"))
+        assertEquals(InlineWrapper("wrapped"), decode("'wrapped'"))
+        assertEquals(Wrapper(InlineWrapper("str")), decode("{obj:\"str\"}"))
     }
 
     @Test
@@ -261,8 +261,15 @@ class DeserializationTest {
     }
 
     @Test
-    fun mapValue() {
+    fun mapWithStringKeys() {
         assertEquals(mapOf("first" to 10, "second" to 433), decode("{ first: 10, second: 433 }"))
+        assertEquals(mapOf<String?, Int>("null" to 0), decode("{null:0}"))
+    }
+
+    @Test
+    fun mapWithWrappedStringKeys() {
+        assertEquals(mapOf(InlineWrapper("a") to true, InlineWrapper("b") to false), decode("{a:true,b:false}"))
+        assertEquals(mapOf<InlineWrapper<String>?, Int>(InlineWrapper("null") to 0), decode("{null:0}"))
     }
 
     @Test
@@ -283,7 +290,8 @@ class DeserializationTest {
         }
 
         assertUnsupported { decode<Map<DummyEnum, Int>>("{a:0}") }
-        assertUnsupported { decode<Map<Wrapper<Int>, Int>>("{a:0}") }
+        assertUnsupported { decode<Map<DummyEnum?, Int>>("{a:0}") }
+        assertUnsupported { decode<Map<InlineWrapper<Int>, Int>>("{a:0}") }
         assertUnsupported { decode<Map<Int?, Int>>("{a:0}") }
         assertUnsupported { decode<Map<Char, Int>>("{a:0}") }
         assertUnsupported { decode<Map<Byte, Int>>("{a:0}") }
@@ -293,7 +301,6 @@ class DeserializationTest {
         assertUnsupported { decode<Map<Float, Int>>("{a:0}") }
         assertUnsupported { decode<Map<Double, Int>>("{a:0}") }
         assertUnsupported { decode<Map<Boolean, Int>>("{a:0}") }
-        assertUnsupported { decode<Map<String?, Int>>("{a:0}") }
     }
 
     @Test
