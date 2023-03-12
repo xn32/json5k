@@ -5,14 +5,14 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.xn32/json5k)](https://search.maven.org/artifact/io.github.xn32/json5k/)
 [![API documentation](https://img.shields.io/badge/docs-Dokka-informational)](https://xn32.github.io/json5k/api/)
 
-This is an experimental [JSON5](https://json5.org/) library for Kotlin/JVM.
+This is an experimental [JSON5](https://json5.org/) library for Kotlin/JVM and Kotlin/Native.
 It makes use of the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) framework to serialize object hierarchies into standard-compliant JSON5 text and vice versa.
 
 ## Key features
 
 - Compliance with [v1.0.0](https://spec.json5.org/1.0.0/) of the JSON5 specification
 - Support for polymorphic types and configurable class discriminators
-- Carefully composed error messages for deserialization errors
+- Concise error messages for deserialization errors
 - Support for the serialization of comments for class properties
 - Rejection of duplicate keys during deserialization
 
@@ -21,8 +21,8 @@ It makes use of the [kotlinx.serialization](https://github.com/Kotlin/kotlinx.se
 json5k is available on [Maven Central](https://search.maven.org/artifact/io.github.xn32/json5k):
 ```kotlin
 plugins {
-    kotlin("jvm") version "1.7.20"
-    kotlin("plugin.serialization") version "1.7.20"
+    kotlin("jvm") version "1.8.10"
+    kotlin("plugin.serialization") version "1.8.10"
 }
 
 repositories {
@@ -30,9 +30,16 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.xn32:json5k:0.2.1")
+    implementation("io.github.xn32:json5k:0.3.0")
 }
 ```
+
+Official versions are published for the following targets:
+- Java Virtual Machine: `jvm`
+- x86-64 platforms: `linuxX64`, `macosX64`, `iosX64`, `mingwX64`
+- Apple Silicon platforms: `macosArm64`, `iosArm64`, `iosSimulatorArm64`
+
+Snapshot versions of the `main` branch are available from [here](https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/xn32/).
 
 ## Usage examples
 
