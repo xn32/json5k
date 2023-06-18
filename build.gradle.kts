@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "io.github.xn32"
-version = "0.3.0"
+version = "0.4.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -29,6 +29,12 @@ kotlin {
             executionTask.configure {
                 useJUnitPlatform()
             }
+        }
+    }
+
+    targets {
+        js(IR) {
+            nodejs()
         }
     }
 

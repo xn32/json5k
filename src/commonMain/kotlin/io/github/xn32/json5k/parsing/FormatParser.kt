@@ -1,14 +1,12 @@
 package io.github.xn32.json5k.parsing
 
 import io.github.xn32.json5k.LiteralError
-import io.github.xn32.json5k.OverflowError
 import io.github.xn32.json5k.format.DocumentTracker
 import io.github.xn32.json5k.format.Specification
 import io.github.xn32.json5k.format.Token
 import io.github.xn32.json5k.isDecimalDigit
 import io.github.xn32.json5k.isHexDigit
 import io.github.xn32.json5k.throwTokenError
-import kotlin.math.pow
 
 internal data class Event<out T>(
     val pos: LinePosition,
@@ -158,8 +156,12 @@ internal class FormatParser(streamReader: InputSource) : Parser<Token> {
 
     private fun parseLiteral(): Token.Value {
         val pos = reader.pos
-        val letters = reader.consumeWhile(Char::isLetter)
-        return numLiteralOf(letters) ?: miscLiteralOf(letters) ?: throw LiteralError(letters, pos)
+        val literal = reader.consumeWhile(Char::isLetter)
+        return if (isNumLiteral(literal)) {
+            Token.Num(literal)
+        } else {
+            miscLiteralOf(literal) ?: throw LiteralError(literal, pos)
+        }
     }
 
     private fun parseStructCloser(): Token {
@@ -177,114 +179,77 @@ internal class FormatParser(streamReader: InputSource) : Parser<Token> {
     }
 }
 
-private fun SourceReader.readOptionalSign(): Sign {
-    return when (peekOrNull()) {
-        '+' -> Sign.PLUS
-        '-' -> Sign.MINUS
-        else -> return Sign.PLUS
-    }.also {
-        consume()
-    }
-}
-
 private class NumParser(private val reader: FormatReader) {
     fun parseNumber(): Token.Num {
-        val pos = reader.pos
-        val negate = reader.readOptionalSign() == Sign.MINUS
-        val next = reader.peekOrNull() ?: reader.throwTokenError()
-
-        val value = if (next == '0') {
-            parseZeroPrefixedNumber()
-        } else if (next == '.' || next.isDecimalDigit()) {
-            parseDecimal()
-        } else {
-            parseNumLiteral()
-        }
-
-        return if (negate && value is Token.FloatingPoint) {
-            Token.FloatingPoint(-value.number)
-        } else if (negate && value is Token.UnsignedInteger) {
-            if (value.number <= Long.MIN_VALUE.toULong()) {
-                Token.SignedInteger(-value.number.toLong())
-            } else {
-                throw OverflowError(pos)
-            }
-        } else {
-            value
-        }
-    }
-
-    private fun parseZeroPrefixedNumber(): Token.Num {
-        val pos = reader.pos
-        reader.consume()
-        return when (reader.peekOrNull()) {
-            'x', 'X' -> parseHexNumber(pos)
-            '.' -> parseDecimal()
-            else -> Token.UnsignedInteger(0u)
-        }
-    }
-
-    private fun parseNumLiteral(): Token.Num {
-        val pos = reader.pos
-        val letters = reader.consumeWhile(Char::isLetter)
-        return numLiteralOf(letters) ?: throw LiteralError(letters, pos)
-    }
-
-    private fun parseHexNumber(startPos: LinePosition): Token.Num {
-        reader.consume()
-        val hexString = reader.readHexString()
-        if (hexString.isEmpty()) {
-            reader.throwTokenError()
-        }
-
-        val number = try {
-            hexString.toULong(HEX_BASE)
-        } catch (e: NumberFormatException) {
-            throw OverflowError(startPos)
-        }
-
-        return Token.UnsignedInteger(number)
-    }
-
-    private fun parseExponent(): Int? = if (reader.peekOrNull()?.lowercaseChar() == 'e') {
-        reader.consume()
-
-        val factor = when (reader.readOptionalSign()) {
-            Sign.PLUS -> +1
-            Sign.MINUS -> -1
-        }
-
-        val str = reader.consumeWhile(Char::isDecimalDigit)
-        if (str.isEmpty()) {
-            reader.throwTokenError()
-        }
-
-        factor * str.toInt()
-    } else {
-        null
-    }
-
-    private fun parseDecimal(): Token.Num {
         val builder = StringBuilder()
+        parseOptionalSign(builder)
 
-        builder.appendWhile(reader, Char::isDecimalDigit)
-        val hasDecimalPoint = reader.peekOrNull() == '.'
-        if (hasDecimalPoint) {
+        val next = reader.peekOrNull() ?: reader.throwTokenError()
+        if (next == '0') {
+            parseZeroPrefixedNumber(builder)
+        } else if (next == '.' || next.isDecimalDigit()) {
+            parseDecimal(builder)
+        } else {
+            parseNumLiteral(builder)
+        }
+
+        return Token.Num(builder.toString())
+    }
+
+    private fun parseOptionalSign(builder: StringBuilder) {
+        val peek = reader.peekOrNull()
+        if (peek == '+') {
+            reader.consume()
+        } else if (peek == '-') {
+            builder.append(reader.consume())
+        }
+    }
+
+    private fun parseZeroPrefixedNumber(builder: StringBuilder) {
+        builder.append(reader.consume())
+        when (reader.peekOrNull()) {
+            'x', 'X' -> parseHexNumber(builder)
+            '.' -> parseDecimal(builder)
+        }
+    }
+
+    private fun parseNumLiteral(builder: StringBuilder) {
+        val pos = reader.pos
+        val literal = reader.consumeWhile(Char::isLetter)
+        if (isNumLiteral(literal)) {
+            builder.append(literal)
+        } else {
+            throw LiteralError(literal, pos)
+        }
+    }
+
+    private fun parseHexNumber(builder: StringBuilder) {
+        builder.append(reader.consume().lowercase())
+        if (builder.appendWhile(reader, Char::isHexDigit) == 0) {
+            reader.throwTokenError()
+        }
+    }
+
+    private fun parseDecimal(builder: StringBuilder) {
+        val preCount = builder.appendWhile(reader, Char::isDecimalDigit)
+        val postCount = if (reader.peekOrNull() == '.') {
             builder.append(reader.consume())
             builder.appendWhile(reader, Char::isDecimalDigit)
+        } else {
+            0u
         }
 
-        val token = builder.toString()
-        if (token == ".") {
+        if (preCount == 0 && postCount == 0) {
             reader.throwTokenError()
         }
 
-        val exp = parseExponent()
-        return if (hasDecimalPoint || exp != null) {
-            val factor = exp?.let { EXPONENTIAL_BASE.pow(it) } ?: 1.0
-            Token.FloatingPoint(factor * token.toDouble())
-        } else {
-            Token.UnsignedInteger(token.toULong())
+        if (reader.peekOrNull() == 'e' || reader.peekOrNull() == 'E') {
+            builder.append(reader.consume())
+            parseOptionalSign(builder)
+            val count = builder.appendWhile(reader, Char::isDecimalDigit)
+            if (count == 0) {
+                reader.throwTokenError()
+            }
         }
     }
 }
@@ -315,21 +280,16 @@ private class StringParser(private val reader: FormatReader) {
         when (val char = reader.peek()) {
             in Specification.LINE_TERMINATORS ->
                 reader.consume()
-
             in Specification.SINGLE_ESCAPE_CHARS ->
                 sink.append(Specification.SINGLE_ESCAPE_CHARS[reader.consume()]!!)
-
             in '1'..'9' ->
                 reader.throwTokenError()
-
             '0' ->
                 sink.append(0.toChar()).also { reader.consume() }
-
             'x', 'u' -> {
                 reader.consume()
                 sink.append(reader.readHexSequence(if (char == 'u') U_HEX_DIGITS else X_HEX_DIGITS))
             }
-
             else ->
                 sink.append(reader.consume())
         }
@@ -349,22 +309,22 @@ private fun SourceReader.readHexSequence(width: Int): Char {
     return builder.toString().toInt(HEX_BASE).toChar()
 }
 
-private fun StringBuilder.appendWhile(reader: SourceReader, predicate: (Char) -> Boolean) {
+private fun StringBuilder.appendWhile(reader: SourceReader, predicate: (Char) -> Boolean): Int {
+    var counter = 0
     while (true) {
         val next = reader.peekOrNull()
-
         if (next != null && predicate(next)) {
             append(reader.consume())
+            counter++
         } else {
-            break
+            return counter
         }
     }
 }
 
-private fun numLiteralOf(letters: String): Token.Num? = when (letters) {
-    "Infinity" -> Token.FloatingPoint(Double.POSITIVE_INFINITY)
-    "NaN" -> Token.FloatingPoint(Double.NaN)
-    else -> null
+private fun isNumLiteral(letters: String): Boolean = when (letters) {
+    "Infinity", "NaN" -> true
+    else -> false
 }
 
 private fun miscLiteralOf(letters: String): Token.Value? = when (letters) {
@@ -374,11 +334,6 @@ private fun miscLiteralOf(letters: String): Token.Value? = when (letters) {
     else -> null
 }
 
-private const val EXPONENTIAL_BASE = 10.0
 private const val HEX_BASE = 16
 private const val U_HEX_DIGITS = 4
 private const val X_HEX_DIGITS = 2
-
-private enum class Sign { PLUS, MINUS }
-
-private fun SourceReader.readHexString(): String = consumeWhile(Char::isHexDigit)

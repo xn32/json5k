@@ -36,7 +36,7 @@ import kotlinx.serialization.modules.SerializersModule
  * A custom instance is obtained by calling the builder function and populating the
  * associated [ConfigBuilder] object with the desired configuration options.
  */
-sealed class Json5 constructor(
+sealed class Json5(
     override val serializersModule: SerializersModule,
     private val settings: Settings
 ) : StringFormat {

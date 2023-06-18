@@ -37,11 +37,11 @@ internal class MainEncoder(
     override fun encodeInt(value: Int) = encodeLong(value.toLong())
 
     override fun encodeLong(value: Long) {
-        generator.put(Token.SignedInteger(value))
+        generator.put(Token.Num(value.toString()))
     }
 
     override fun encodeDouble(value: Double) {
-        generator.put(Token.FloatingPoint(value))
+        generator.put(Token.Num(value.toString()))
     }
 
     override fun encodeString(value: String) {
@@ -82,7 +82,7 @@ private class UnsignedEncoder(private val parent: MainEncoder) : Encoder {
     override fun encodeString(value: String) = throw UnsupportedOperationException()
 
     private fun encodeUnsigned(value: ULong) {
-        generator.put(Token.UnsignedInteger(value))
+        generator.put(Token.Num(value.toString()))
     }
 
     override fun encodeByte(value: Byte) = encodeUnsigned(value.toUByte().toULong())

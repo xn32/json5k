@@ -37,87 +37,9 @@ class FormatGeneratorTest {
     }
 
     @Test
-    fun signedNegativeInteger() {
+    fun numberValue() {
         assertEquals("-4443", generate(OutputStrategy.Compressed) {
-            put(Token.SignedInteger(-4443))
-        })
-    }
-
-    @Test
-    fun signedPositiveInteger() {
-        assertEquals("33332", generate(OutputStrategy.Compressed) {
-            put(Token.SignedInteger(33332))
-        })
-    }
-
-    @Test
-    fun unsignedInteger() {
-        assertEquals("7371823712", generate(OutputStrategy.Compressed) {
-            put(Token.UnsignedInteger(7371823712u))
-        })
-    }
-
-    @Test
-    fun plainFloatingPointNumber() {
-        assertEquals("0.0", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(0.0))
-        })
-
-        assertEquals("9000000.0", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(0.9e7))
-        })
-
-        assertEquals("0.001", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(1e-3))
-        })
-
-        assertEquals("-0.1123", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(-0.1123))
-        })
-    }
-
-    @Test
-    fun largeFloatingPointNumber() {
-        assertEquals("1.0E7", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(1e7))
-        })
-
-        assertEquals("-1.0E7", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(-1e7))
-        })
-
-        assertEquals("4.511E31", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(4.511e31))
-        })
-    }
-
-    @Test
-    fun smallFloatingPointNumber() {
-        assertEquals("9.0E-4", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(0.9e-3))
-        })
-
-        assertEquals("-9.0E-4", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(-0.9e-3))
-        })
-
-        assertEquals("5.612E-20", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(5.612e-20))
-        })
-    }
-
-    @Test
-    fun numericLiterals() {
-        assertEquals("Infinity", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(Double.POSITIVE_INFINITY))
-        })
-
-        assertEquals("-Infinity", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(Double.NEGATIVE_INFINITY))
-        })
-
-        assertEquals("NaN", generate(OutputStrategy.Compressed) {
-            put(Token.FloatingPoint(Double.NaN))
+            put(Token.Num("-4443"))
         })
     }
 
@@ -134,7 +56,7 @@ class FormatGeneratorTest {
         assertEquals("{abc:10}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("abc"))
-            put(Token.SignedInteger(10))
+            put(Token.Num("10"))
             put(Token.EndObject)
         })
     }
@@ -144,11 +66,11 @@ class FormatGeneratorTest {
         assertEquals("{first:10,second:null,third:1.1}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("first"))
-            put(Token.SignedInteger(10))
+            put(Token.Num("10"))
             put(Token.MemberName("second"))
             put(Token.Null)
             put(Token.MemberName("third"))
-            put(Token.FloatingPoint(1.1))
+            put(Token.Num("1.1"))
             put(Token.EndObject)
         })
     }
@@ -159,11 +81,11 @@ class FormatGeneratorTest {
             put(Token.BeginArray)
             put(Token.BeginObject)
             put(Token.MemberName("a"))
-            put(Token.SignedInteger(10))
+            put(Token.Num("10"))
             put(Token.EndObject)
             put(Token.BeginObject)
             put(Token.MemberName("b"))
-            put(Token.SignedInteger(20))
+            put(Token.Num("20"))
             put(Token.EndObject)
             put(Token.EndArray)
         })
@@ -223,9 +145,9 @@ class FormatGeneratorTest {
         assertEquals("{key:10,\"~a\":20}", generate(OutputStrategy.Compressed) {
             put(Token.BeginObject)
             put(Token.MemberName("key"))
-            put(Token.SignedInteger(10))
+            put(Token.Num("10"))
             put(Token.MemberName("~a"))
-            put(Token.SignedInteger(20))
+            put(Token.Num("20"))
             put(Token.EndObject)
         })
     }
@@ -241,7 +163,7 @@ class FormatGeneratorTest {
             generate(newHumanReadableStrategy(quoteMemberNames = true)) {
                 put(Token.BeginObject)
                 put(Token.MemberName("key"))
-                put(Token.UnsignedInteger(1000u))
+                put(Token.Num("1000"))
                 put(Token.EndObject)
             }
         )
@@ -261,10 +183,10 @@ class FormatGeneratorTest {
             generate(newHumanReadableStrategy()) {
                 put(Token.BeginObject)
                 put(Token.MemberName("number"))
-                put(Token.SignedInteger(-11))
+                put(Token.Num("-11"))
                 put(Token.MemberName("array"))
                 put(Token.BeginArray)
-                put(Token.SignedInteger(44))
+                put(Token.Num("44"))
                 put(Token.EndArray)
                 put(Token.EndObject)
             }
@@ -282,7 +204,7 @@ class FormatGeneratorTest {
             generate(newHumanReadableStrategy(indentationWidth = 2)) {
                 put(Token.BeginObject)
                 put(Token.MemberName("key"))
-                put(Token.SignedInteger(-12))
+                put(Token.Num("-12"))
                 put(Token.EndObject)
             }
         )
@@ -331,7 +253,7 @@ class FormatGeneratorTest {
             put(Token.BeginObject)
             writeComment("comment")
             put(Token.MemberName("a"))
-            put(Token.SignedInteger(10))
+            put(Token.Num("10"))
             put(Token.EndObject)
         })
     }
@@ -352,12 +274,12 @@ class FormatGeneratorTest {
             generate(newHumanReadableStrategy()) {
                 put(Token.BeginObject)
                 put(Token.MemberName("a"))
-                put(Token.SignedInteger(11))
+                put(Token.Num("11"))
                 writeComment("First comment")
                 writeComment(" Second comment\n spanning two lines")
                 writeComment("Third comment")
                 put(Token.MemberName("b"))
-                put(Token.SignedInteger(12))
+                put(Token.Num("12"))
                 put(Token.EndObject)
             })
     }

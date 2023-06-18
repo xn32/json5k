@@ -3,7 +3,6 @@ package io.github.xn32.json5k.internals
 import io.github.xn32.json5k.CharError
 import io.github.xn32.json5k.EndOfFileError
 import io.github.xn32.json5k.LiteralError
-import io.github.xn32.json5k.OverflowError
 import io.github.xn32.json5k.ParsingError
 import io.github.xn32.json5k.check
 import io.github.xn32.json5k.checkPosition
@@ -116,7 +115,7 @@ class FormatParserTest {
         parserFor("{a: 10]").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2)
-            checkNext<Token.Integer>(1, 5)
+            checkNext<Token.Num>(1, 5)
             checkError<CharError>(1, 7)
         }
     }
@@ -185,9 +184,9 @@ class FormatParserTest {
         parserFor("{'a':10,\"b\":20}").apply {
             checkNext<Token.BeginObject>(1, 1)
             checkNext<Token.MemberName>(1, 2)
-            checkNext<Token.Integer>(1, 6)
+            checkNext<Token.Num>(1, 6)
             checkNext<Token.MemberName>(1, 9)
-            checkNext<Token.Integer>(1, 13)
+            checkNext<Token.Num>(1, 13)
             checkNext<Token.EndObject>(1, 15)
         }
 
@@ -197,7 +196,7 @@ class FormatParserTest {
                 assertEquals("id", it.name)
             }
 
-            checkNext<Token.Integer>(1, 11)
+            checkNext<Token.Num>(1, 11)
             checkNext<Token.EndObject>(1, 12)
         }
     }
@@ -331,16 +330,16 @@ class FormatParserTest {
 
     @Test
     fun topLevelNumericLiteral() {
-        parserFor("Infinity").checkFloatingPoint(1, 1, Double.POSITIVE_INFINITY).checkEnd(1, 9)
-        parserFor("NaN").checkFloatingPoint(1, 1, Double.NaN).checkEnd(1, 4)
+        parserFor("Infinity").checkNext<Token.Num>(1, 1).checkEnd(1, 9)
+        parserFor("NaN").checkNext<Token.Num>(1, 1).checkEnd(1, 4)
     }
 
     @Test
     fun topLevelNumericLiteralWithSign() {
-        parserFor("+Infinity").checkFloatingPoint(1, 1, Double.POSITIVE_INFINITY).checkEnd(1, 10)
-        parserFor("-Infinity").checkFloatingPoint(1, 1, Double.NEGATIVE_INFINITY).checkEnd(1, 10)
-        parserFor("+NaN").checkFloatingPoint(1, 1, Double.NaN).checkEnd(1, 5)
-        parserFor("-NaN").checkFloatingPoint(1, 1, Double.NaN).checkEnd(1, 5)
+        parserFor("+Infinity").checkNext<Token.Num>(1, 1).checkEnd(1, 10)
+        parserFor("-Infinity").checkNext<Token.Num>(1, 1).checkEnd(1, 10)
+        parserFor("+NaN").checkNext<Token.Num>(1, 1).checkEnd(1, 5)
+        parserFor("-NaN").checkNext<Token.Num>(1, 1).checkEnd(1, 5)
     }
 
     @Test
@@ -470,92 +469,84 @@ class FormatParserTest {
 
     @Test
     fun topLevelZero() {
-        parserFor("0").checkNext<Token.UnsignedInteger>(1, 1) {
-            assertEquals(0u, it.number)
+        parserFor("0").checkNext<Token.Num>(1, 1) {
+            assertEquals("0", it.rep)
         }.checkEnd(1, 2)
     }
 
     @Test
     fun leadingZero() {
         parserFor("01").apply {
-            checkNext<Token.UnsignedInteger>(1, 1)
+            checkNext<Token.Num>(1, 1)
             checkError<CharError>(1, 2)
         }
     }
 
     @Test
     fun fractionalNumber() {
-        parserFor("0.111").apply {
-            checkFloatingPoint(1, 1, 0.111)
-            checkEnd(1, 6)
-        }
+        parserFor("0.111").checkNext<Token.Num>(1, 1).checkEnd(1, 6)
     }
 
     @Test
     fun leadingDecimalPoint() {
-        parserFor(".45").checkFloatingPoint(1, 1, 0.45).checkEnd(1, 4)
+        parserFor(".45").checkNext<Token.Num>(1, 1).checkEnd(1, 4)
     }
 
     @Test
     fun hexNumber() {
-        parserFor("0XaA01").checkNext<Token.UnsignedInteger>(1, 1) {
-            assertEquals(0xAA01u, it.number)
+        parserFor("0XaA01").checkNext<Token.Num>(1, 1) {
+            assertEquals("0xaA01", it.rep)
         }.checkEnd(1, 7)
 
-        parserFor(" 0xaAbB ").checkNext<Token.UnsignedInteger>(1, 2) {
-            assertEquals(0xAABBu, it.number)
+        parserFor(" 0xaAbB ").checkNext<Token.Num>(1, 2) {
+            assertEquals("0xaAbB", it.rep)
         }.checkEnd(1, 9)
     }
 
     @Test
     fun decimalInteger() {
-        parserFor("400").checkNext<Token.UnsignedInteger>(1, 1) {
-            assertEquals(400u, it.number)
-        }.checkEnd(1, 4)
+        parserFor("+400").checkNext<Token.Num>(1, 1) {
+            assertEquals("400", it.rep)
+        }.checkEnd(1, 5)
     }
 
     @Test
-    fun negativeIntegerOverflow() {
-        parserFor("-0x8000000000000000").checkNext<Token.SignedInteger>(1, 1)
-        parserFor("-0x8000000000000001").checkError<OverflowError>(1, 1)
+    fun noNegativeOverflow() {
+        parserFor("-0x8000000000000001").checkNext<Token.Num>(1, 1)
     }
 
     @Test
-    fun positiveIntegerOverflow() {
-        parserFor("0xFFFFFFFFFFFFFFFF").checkNext<Token.UnsignedInteger>(1, 1) {
-            assertEquals(ULong.MAX_VALUE, it.number)
-        }.checkEnd(1, 19)
-
-        parserFor("0x10000000000000000").checkError<OverflowError>(1, 1)
+    fun noPositiveOverflow() {
+        parserFor("0x10000000000000000").checkNext<Token.Num>(1, 1)
     }
 
     @Test
     fun trailingDecimalPoint() {
-        parserFor("55.").checkFloatingPoint(1, 1, 55.0).checkEnd(1, 4)
+        parserFor("55.").checkNext<Token.Num>(1, 1).checkEnd(1, 4)
     }
 
     @Test
     fun scientificNotation() {
-        parserFor("11e0").checkFloatingPoint(1, 1, 11.0).checkEnd(1, 5)
+        parserFor("11e0").checkNext<Token.Num>(1, 1).checkEnd(1, 5)
     }
 
     @Test
     fun negativeDecimalInteger() {
-        parserFor("-1").checkNext<Token.SignedInteger>(1, 1) {
-            assertEquals(-1, it.number)
+        parserFor("-1").checkNext<Token.Num>(1, 1) {
+            assertEquals("-1", it.rep)
         }.checkEnd(1, 3)
     }
 
     @Test
     fun negativeHexNumber() {
-        parserFor("-0xFF1E").checkNext<Token.SignedInteger>(1, 1) {
-            assertEquals(-0xFF1E, it.number)
+        parserFor("-0xFF1E").checkNext<Token.Num>(1, 1) {
+            assertEquals("-0xFF1E", it.rep)
         }.checkEnd(1, 8)
     }
 
     @Test
     fun negativeFractionalNumber() {
-        parserFor("-0.25").checkFloatingPoint(1, 1, -0.25).checkEnd(1, 6)
+        parserFor("-0.25").checkNext<Token.Num>(1, 1).checkEnd(1, 6)
     }
 
     @Test
@@ -567,25 +558,25 @@ class FormatParserTest {
 
     @Test
     fun lowercaseExponentSymbol() {
-        parserFor("11.2e-3").checkFloatingPoint(1, 1, .0112).checkEnd(1, 8)
-        parserFor("55e10").checkFloatingPoint(1, 1, 55e10).checkEnd(1, 6)
-        parserFor("10e+3").checkFloatingPoint(1, 1, 10e3).checkEnd(1, 6)
+        parserFor("11.2e-3").checkNext<Token.Num>(1, 1).checkEnd(1, 8)
+        parserFor("55e10").checkNext<Token.Num>(1, 1).checkEnd(1, 6)
+        parserFor("10e+3").checkNext<Token.Num>(1, 1).checkEnd(1, 6)
     }
 
     @Test
     fun uppercaseExponentSymbol() {
-        parserFor(".4E10").checkFloatingPoint(1, 1, .4e10).checkEnd(1, 6)
+        parserFor(".4E10").checkNext<Token.Num>(1, 1).checkEnd(1, 6)
     }
 
     @Test
     fun erroneousExponentSymbol() {
         parserFor(".4f10").apply {
-            checkNext<Token.FloatingPoint>(1, 1)
+            checkNext<Token.Num>(1, 1)
             checkError<CharError>(1, 3)
         }
 
         parserFor("4 e10").apply {
-            checkNext<Token.UnsignedInteger>(1, 1)
+            checkNext<Token.Num>(1, 1)
             checkError<CharError>(1, 3)
         }
     }
@@ -593,7 +584,7 @@ class FormatParserTest {
     @Test
     fun repeatedDecimalPoint() {
         parserFor("10.25.5").apply {
-            checkNext<Token.FloatingPoint>(1, 1)
+            checkNext<Token.Num>(1, 1)
             checkError<CharError>(1, 6)
         }
     }
@@ -647,11 +638,6 @@ private inline fun <reified E : ParsingError> Parser<Token>.checkError(
 
     return this
 }
-
-private fun Parser<Token>.checkFloatingPoint(line: Int? = null, column: Int? = null, value: Double): Parser<Token> =
-    checkNext<Token.FloatingPoint>(line, column) {
-        assertEquals(value, it.number, 1e-10)
-    }
 
 private fun Parser<Token>.checkEnd(line: Int? = null, column: Int? = null) {
     checkNext<Token.EndOfFile>(line, column)

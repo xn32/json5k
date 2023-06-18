@@ -157,10 +157,8 @@ internal class FormatGenerator(private val sink: OutputSink, private val outputS
         when (token) {
             is Token.Bool -> sink.write(token.bool.toString())
             Token.Null -> sink.write("null")
-            is Token.FloatingPoint -> sink.write(token.number.toString())
-            is Token.SignedInteger -> sink.write(token.number.toString())
-            is Token.UnsignedInteger -> sink.write(token.number.toString())
             is Token.Str -> writeQuoted(token.string)
+            is Token.Num -> sink.write(token.rep)
         }
     }
 }

@@ -189,16 +189,8 @@ class DeserializationTest {
 
     @Test
     fun unexpectedParserValue() {
-        val intError = assertFailsWith<UnexpectedValueError> {
+        val numberError = assertFailsWith<UnexpectedValueError> {
             decode<Wrapper<Int>>("{ obj: { a: 10 }}")
-        }
-
-        val unsignedIntError = assertFailsWith<UnexpectedValueError> {
-            decode<Wrapper<UInt>>("{ obj: -10 }")
-        }
-
-        val floatError = assertFailsWith<UnexpectedValueError> {
-            decode<Wrapper<Double>>("{ obj: true }")
         }
 
         val boolError = assertFailsWith<UnexpectedValueError> {
@@ -209,13 +201,11 @@ class DeserializationTest {
             decode<Wrapper<String>>("{ obj: [1, 2] }")
         }
 
-        assertContains(intError.violation, "integer expected")
-        assertContains(unsignedIntError.violation, "unsigned integer expected")
-        assertContains(floatError.violation, "floating-point number expected")
+        assertContains(numberError.violation, "number expected")
         assertContains(boolError.violation, "boolean value expected")
         assertContains(stringError.violation, "string literal expected")
 
-        for (error in listOf(intError, floatError, boolError, stringError)) {
+        for (error in listOf(numberError, boolError, stringError)) {
             error.checkPosition(1, 8)
         }
     }
@@ -316,19 +306,30 @@ class DeserializationTest {
     }
 
     @Test
-    fun noImplicitConversion() {
-        val floatError = assertFailsWith<UnexpectedValueError> {
+    fun noImplicitConversions() {
+        val hexToFloatError = assertFailsWith<UnexpectedValueError> {
+            decode<Double>("-0xF")
+        }
+
+        assertContains(hexToFloatError.violation, "floating-point number")
+
+        val floatToIntError = assertFailsWith<UnexpectedValueError> {
             decode<Long>("10.0")
         }
 
-        val expError = assertFailsWith<UnexpectedValueError> {
+        val expToIntError = assertFailsWith<UnexpectedValueError> {
             decode<Short>("1e2")
         }
 
-        listOf(floatError, expError).forEach { error ->
-            assertContains(error.violation, "integer expected")
+        listOf(floatToIntError, expToIntError).forEach { error ->
+            assertContains(error.violation, "signed integer in range")
             error.checkPosition(1, 1)
         }
+    }
+
+    @Test
+    fun decimalToFloatConversion() {
+        assertEquals(10.0, decode<Double>("10"), 1e-10)
     }
 
     @Test

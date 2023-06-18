@@ -43,15 +43,9 @@ class EndOfFileError internal constructor(pos: LinePosition) :
     ParsingError("unexpected end of file", pos)
 
 /**
- * Exception class thrown if a number in the JSON5 input exceeds the range that the parser is able to handle.
- */
-class OverflowError internal constructor(pos: LinePosition) :
-    ParsingError("integer exceeds internal value range", pos)
-
-/**
  * Base class for errors related to the translation of syntactically correct JSON5 input into an object hierarchy.
  */
-sealed class DecodingError constructor(msg: String, pos: LinePosition) : InputError(msg, pos)
+sealed class DecodingError(msg: String, pos: LinePosition) : InputError(msg, pos)
 
 /**
  * Exception class thrown if a required field of a Kotlin class is missing.

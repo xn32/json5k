@@ -82,10 +82,10 @@ internal class MainDecoder(
     override fun decodeInt(): Int = parser.getInteger(SignedLimits.INT).toInt()
     override fun decodeLong(): Long = parser.getInteger(SignedLimits.LONG)
 
+    override fun decodeDouble(): Double = parser.getDouble()
     override fun decodeFloat(): Float = decodeDouble().toFloat()
 
     override fun decodeBoolean(): Boolean = parser.next().extractType<Token.Bool>().bool
-    override fun decodeDouble(): Double = parser.next().extractType<Token.FloatingPoint>().number
     override fun decodeString(): String = parser.next().extractType<Token.Str>().string
 
     override fun decodeChar(): Char {
@@ -165,24 +165,42 @@ private object UnsignedLimits {
     val LONG = ULong.MAX_VALUE
 }
 
-private fun Parser<Token>.getInteger(limits: LongRange): Long {
-    val (pos, token) = next().mapType<Token.Integer>()
+private fun Token.Num.isHexNumber() = rep.startsWith("0x") || rep.startsWith("-0x")
+private fun Token.Num.removeHexPrefix() = rep.replaceFirst("0x", "")
 
-    return if (token is Token.SignedInteger && token.number in limits) {
-        token.number
-    } else if (token is Token.UnsignedInteger && token.number <= limits.last.toULong()) {
-        token.number.toLong()
+private fun Parser<Token>.getInteger(limits: LongRange): Long {
+    val (pos, token) = next().mapType<Token.Num>()
+    val num = if (token.isHexNumber()) {
+        val hexString = token.removeHexPrefix()
+        hexString.toLongOrNull(16)
     } else {
+        token.rep.toLongOrNull()
+    }
+
+    if (num == null || num !in limits) {
         throw UnexpectedValueError("signed integer in range [$limits] expected", pos)
     }
+
+    return num
 }
 
 private fun Parser<Token>.getUnsignedInteger(max: ULong): ULong {
-    val (pos, token) = next().mapType<Token.UnsignedInteger>()
-
-    return if (token.number <= max) {
-        token.number
+    val (pos, token) = next().mapType<Token.Num>()
+    val num = if (token.isHexNumber()) {
+        val hexString = token.removeHexPrefix()
+        hexString.toULongOrNull(16)
     } else {
+        token.rep.toULongOrNull()
+    }
+
+    if (num == null || num > max) {
         throw UnexpectedValueError("unsigned integer in range [0..$max] expected", pos)
     }
+
+    return num
+}
+
+private fun Parser<Token>.getDouble(): Double {
+    val (pos, token) = next().mapType<Token.Num>()
+    return token.rep.toDoubleOrNull() ?: throw UnexpectedValueError("floating-point number expected", pos)
 }

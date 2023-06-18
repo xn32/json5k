@@ -18,17 +18,9 @@ internal sealed interface Token {
     value class MemberName(val name: String) : Token
 
     sealed interface Value : Token
-    sealed interface Num : Value
-    sealed interface Integer : Num
 
     @JvmInline
-    value class SignedInteger(val number: Long) : Integer
-
-    @JvmInline
-    value class UnsignedInteger(val number: ULong) : Integer
-
-    @JvmInline
-    value class FloatingPoint(val number: Double) : Num
+    value class Num(val rep: String) : Value
 
     @JvmInline
     value class Str(val string: String) : Value
