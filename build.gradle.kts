@@ -66,10 +66,6 @@ val sonatypePassword: String? by project
 
 val isReleaseVersion = !version.toString().endsWith("SNAPSHOT")
 
-val javadoc by tasks.registering(Jar::class) {
-    archiveClassifier.set("javadoc")
-}
-
 publishing {
     publications.withType<MavenPublication>().configureEach {
         pom {
@@ -97,10 +93,6 @@ publishing {
                 }
             }
         }
-    }
-
-    publications.withType<MavenPublication>().all {
-        artifact(javadoc.get())
     }
 
     repositories {
