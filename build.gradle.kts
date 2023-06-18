@@ -2,10 +2,10 @@ import org.jetbrains.dokka.gradle.DokkaTask
 import java.net.URL
 
 plugins {
-    kotlin("multiplatform") version "1.8.10"
-    kotlin("plugin.serialization") version "1.8.10"
-    id("org.jetbrains.kotlinx.kover") version "0.6.1"
-    id("org.jetbrains.dokka") version "1.8.10"
+    kotlin("multiplatform") version "1.8.21"
+    kotlin("plugin.serialization") version "1.8.21"
+    id("org.jetbrains.kotlinx.kover") version "0.7.1"
+    id("org.jetbrains.dokka") version "1.8.20"
     `maven-publish`
     signing
 }
@@ -32,10 +32,8 @@ kotlin {
         }
     }
 
-    targets {
-        js(IR) {
-            nodejs()
-        }
+    js(IR) {
+        nodejs()
     }
 
     mingwX64()
@@ -51,7 +49,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.0")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
             }
         }
 
