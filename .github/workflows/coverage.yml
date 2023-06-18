@@ -24,11 +24,7 @@ jobs:
       - uses: gradle/wrapper-validation-action@v1.0.5
       - uses: gradle/gradle-build-action@v2.3.3
         with:
-          arguments: koverReport
-      - uses: actions/upload-artifact@v3
-        with:
-          name: kover-report
-          path: build/reports/kover/html
+          arguments: koverXmlReport
       - uses: codecov/codecov-action@v3
         with:
-          files: ./build/reports/kover/xml/report.xml
+          files: ./build/reports/kover/report.xml
