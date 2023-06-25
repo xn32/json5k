@@ -3,6 +3,7 @@
 [![Build status](https://img.shields.io/github/actions/workflow/status/xn32/json5k/build.yml?branch=main)](https://github.com/xn32/json5k/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/xn32/json5k/branch/main/graph/badge.svg?token=PBPA7T92CC)](https://codecov.io/gh/xn32/json5k)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.xn32/json5k)](https://search.maven.org/artifact/io.github.xn32/json5k/)
+[![Maven Snapshots](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fs01.oss.sonatype.org%2Fcontent%2Frepositories%2Fsnapshots%2Fio%2Fgithub%2Fxn32%2Fjson5k%2Fmaven-metadata.xml&label=snapshots&color=powderblue)](https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/xn32/)
 [![API documentation](https://img.shields.io/badge/docs-Dokka-informational)](https://xn32.github.io/json5k/api/)
 
 This is an experimental [JSON5](https://json5.org/) library for Kotlin/JVM and Kotlin/Native.
